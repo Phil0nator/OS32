@@ -1,0 +1,8 @@
+{
+    "files.associations": {
+        "*.cb": "cpp",
+        "*.k": "cpp",
+        "stdbool.h": "c",
+        "idt.h": "c"
+    }
+}
