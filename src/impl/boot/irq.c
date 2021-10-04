@@ -44,10 +44,12 @@ static irq_routine irq_routines[16] = {NULL};
 err_t irq_install_routine( size_t irqno, irq_routine r )
 {
     irq_routines[irqno] = r;
+    return OS32_SUCCESS;
 }
 err_t irq_uninstall_routine( size_t irqno)
 {
     irq_routines[irqno] = NULL;
+    return OS32_SUCCESS;
 }
 
 

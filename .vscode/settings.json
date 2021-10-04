@@ -3,6 +3,7 @@
         "*.cb": "cpp",
         "*.k": "cpp",
         "stdbool.h": "c",
-        "idt.h": "c"
+        "idt.h": "c",
+        "mutiboot_info.h": "c"
     }
 }

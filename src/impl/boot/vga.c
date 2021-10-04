@@ -1,7 +1,14 @@
 #include "boot/vga.h"
 #include "stdlib/string.h"
+#include "stdlib/ioinstrs.h"
 #include <stdbool.h>
 #include <stdarg.h>
+
+#define CRT_CONTROL_REGISTER_PORTNO_A 0x3D4
+#define CRT_CONTROL_REGISTER_PORTNO_B 0x3D5
+#define VGA_CURSOR_CRTINDEX_A 14
+#define VGA_CURSOR_CRTINDEX_B 15
+
 static struct {
     unsigned x;
     unsigned y;
@@ -27,9 +34,23 @@ static void VGAScroll()
 {
     for ( size_t i = 1; i < VGA_HEIGHT; i++)
     {
-        memcpy( &VGAO[ (i-1)*VGA_WIDTH ], &VGAO[ i*VGA_WIDTH ], VGA_WIDTH*sizeof(VGACell_t) );
+        memmove( &VGAO[ (i-1)*VGA_WIDTH ], &VGAO[ i*VGA_WIDTH ], VGA_WIDTH*sizeof(VGACell_t) );
     }
     memset( &VGAO[ (VGA_HEIGHT-1)*VGA_WIDTH ], 0, VGA_WIDTH * sizeof(VGACell_t) );
+    cursor.y = VGA_HEIGHT-1;
+}
+
+static void VGAUpdateCursor()
+{
+    // http://www.osdever.net/bkerndev/Docs/whatsleft.htm
+
+    uint16_t idx = cursor.x + cursor.y*VGA_WIDTH;
+
+    outportb( CRT_CONTROL_REGISTER_PORTNO_A, VGA_CURSOR_CRTINDEX_A );
+    outportb( CRT_CONTROL_REGISTER_PORTNO_B, idx >> 8 );
+    outportb( CRT_CONTROL_REGISTER_PORTNO_A, VGA_CURSOR_CRTINDEX_B );
+    outportb( CRT_CONTROL_REGISTER_PORTNO_B, idx );
+
 }
 
 static void VGAAdvance()
@@ -38,22 +59,32 @@ static void VGAAdvance()
     if (cursor.x >= VGA_WIDTH)
     {
         cursor.x = 0;
-        cursor.y++;
         if (cursor.y >= VGA_HEIGHT)
         {
             VGAScroll();
         }
+        else
+        {
+            cursor.y++;
+        }
     }
+    VGAUpdateCursor();
+
 }
 
 void vgaNewline()
 {
     cursor.x = 0;
-    cursor.y++;
     if (cursor.y >= VGA_HEIGHT)
     {
         VGAScroll();
     }
+    else
+    {
+        cursor.y++;
+    }
+    VGAUpdateCursor();
+
 }
 
 void vgaPutc( char c )
@@ -61,6 +92,10 @@ void vgaPutc( char c )
     if (c == VGA_NEWLINE)
     {
         vgaNewline();
+    }
+    else if (c == VGA_CARRIAGE)
+    {
+        cursor.x = 0;
     }
     else
     {

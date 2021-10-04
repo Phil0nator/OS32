@@ -38,6 +38,7 @@ section .text
 extern _kernel_start
 extern _kernel_end
 extern _kernel_main
+extern __multiboot_info_temporary
 global _boot
 _boot:
     mov ecx, boot_page_directory - ADDROFF
@@ -60,6 +61,9 @@ _boot_paged:
 
     mov ecx, cr3
     mov cr3, ecx
+
+    add ebx, ADDROFF
+    mov [__multiboot_info_temporary], ebx
 
     mov esp, stack_top
     call _kernel_main

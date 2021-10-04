@@ -20,6 +20,7 @@
 #define VGA_WHITE (15)
 
 #define VGA_NEWLINE ('\n')
+#define VGA_CARRIAGE ('\r')
 #define VGA_WIDTH (80)
 #define VGA_HEIGHT (25)
 
