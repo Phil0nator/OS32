@@ -21,8 +21,12 @@ OS32: $(COUT) $(ASMOUT)
 	cp targets/x86/iso/boot/kernel.elf dist/x86/kernel.elf && \
 	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86/kernel.iso targets/x86/iso
 
+OS32_DBG: OS32
+	qemu-system-i386 dist/x86/kernel.iso -s -S
+
 purge:
 	rm -rf build/ && mkdir build
 
 .PHONY=OS32
+.PHONY=OS32_DBG
 .DEFAULT=OS32

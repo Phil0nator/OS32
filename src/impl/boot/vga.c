@@ -113,9 +113,9 @@ void vgaPutln( const char* msg )
     VGAScroll();
 }
 
-const char* vgaMultiBaseIntChars = "012345679abcdef";
+const char* vgaMultiBaseIntChars = "0123456789abcdef";
 
-void vgaPrintInt( unsigned num, bool sign, uint32_t base )
+void vgaPrintInt( uint32_t num, bool sign, uint32_t base )
 {
     
     char digits[22];

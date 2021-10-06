@@ -3,7 +3,6 @@ ENTRY(_boot)
 SECTIONS
 {
     . = 0x00100000;
-    _kernel_start = .;
     .multiboot.data : {
         *(.multiboot.data)
     }
@@ -25,6 +24,7 @@ SECTIONS
     .data ALIGN (4K) : AT (ADDR(.data) - 0xC0000000)
     {
         *(.data)
+        _kernel_start = 0x00100000;
     }
     .bss ALIGN(4K) : AT(ADDR(.bss) -0xC0000000)
     {
@@ -32,6 +32,8 @@ SECTIONS
         *(.bss)
         *(.bootstrap_stack)
     }
-
     _kernel_end = .;
+
+    
+
 }

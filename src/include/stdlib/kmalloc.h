@@ -7,6 +7,7 @@
 typedef void* kmalloc_ptr;
 
 
+err_t __install_kmalloc();
 
 
 kmalloc_ptr kmalloc( size_t size );

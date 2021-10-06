@@ -7,6 +7,9 @@
 #include "stdlib/assert.h"
 #include "drivers/keyboard.h"
 #include "boot/mutiboot_info.h"
+#include "stdlib/kmalloc.h"
+#include "boot/page.h"
+
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -70,13 +73,17 @@ void _kernel_main()
     }
     vgaPrintf("%+ KB Installed\n");
 
-
+    if ( __install_kmalloc() )
+    {
+        vgaPrintf("%- kmalloc setup");
+        __kernel_main_hlt
+    }
+    vgaPrintf("%+ kmalloc setup\n");
 
     idt_update();
 
     __kernel_main_sti
 
-    
 
     for(;;);
 

@@ -4,6 +4,7 @@
         "*.k": "cpp",
         "stdbool.h": "c",
         "idt.h": "c",
-        "mutiboot_info.h": "c"
+        "mutiboot_info.h": "c",
+        "page.h": "c"
     }
 }

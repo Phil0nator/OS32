@@ -20,6 +20,7 @@ stack_top:
 
 section .data
 align 4096
+global boot_page_directory
 boot_page_directory:
 dd 0x00000083
 dd 0x00400083
@@ -57,10 +58,10 @@ _boot:
 section .text
 _boot_paged:
 
-    mov dword[boot_page_directory], 0
+    ; mov dword[boot_page_directory], 0
 
-    mov ecx, cr3
-    mov cr3, ecx
+    ; mov ecx, cr3
+    ; mov cr3, ecx
 
     add ebx, ADDROFF
     mov [__multiboot_info_temporary], ebx
