@@ -57,6 +57,7 @@ _boot:
 section .text
 _boot_paged:
 
+    mov dword[boot_page_directory], 0
 
     add ebx, ADDROFF
     mov [__multiboot_info_temporary], ebx

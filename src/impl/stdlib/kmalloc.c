@@ -96,8 +96,8 @@ void kmalloc_split( struct kmalloc_header* h, size_t size )
     {
         return;
     }
-    struct kmalloc_header* h2 = (struct kmalloc_header*)(((char*)h)+size);
-    h2->size = h->size - size - sizeof(struct kmalloc_header);
+    struct kmalloc_header* h2 = (struct kmalloc_header*)(((char*)h)+size+sizeof(struct kmalloc_header));
+    h2->size = remaining_size ;
     h->size = size;
     kmalloc_push(h2);
 }
@@ -107,11 +107,12 @@ void kmalloc_merge( struct kmalloc_header* h )
     struct kmalloc_header* it = kmalloc_heap;
     while (it)
     {
-        if (((uint32_t)it + sizeof(struct kmalloc_header) + it->size) == h)
+        if ((((uint32_t)it) + sizeof(struct kmalloc_header) + it->size) == h)
         {
             it->size += sizeof(struct kmalloc_header) + h->size;
             return;
         }
+        if (it->next == kmalloc_heap) break;
         it = it->next;
     }
     kmalloc_push(h);
@@ -140,6 +141,8 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
             kmalloc_remove( ptr );
             return ptr;
         }
+        if (ptr->next == kmalloc_heap) break;
+
         ptr=ptr->next;
     }
     return NULL;
@@ -237,11 +240,11 @@ kmalloc_ptr kmalloc( size_t size )
 {
 
     struct kmalloc_header* h = kmalloc_alloc( size, 1 );
-    return h+1;
+    return (char*)h+sizeof(struct kmalloc_header);
 }
 void kfree( kmalloc_ptr ptr )
 {
-    kmalloc_merge(ptr);
+    kmalloc_merge(((char*)ptr)-sizeof(struct kmalloc_header));
 }
 void kprotect( kmalloc_ptr ptr)
 {

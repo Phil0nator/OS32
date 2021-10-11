@@ -54,5 +54,5 @@ void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags )
 const void* next_virt()
 {
     //https://compas.cs.stonybrook.edu/~nhonarmand/courses/fa17/cse306/slides/07-x86_vm.pdf
-    
+    return NULL;
 }
