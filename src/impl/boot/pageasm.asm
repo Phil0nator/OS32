@@ -7,7 +7,7 @@
 section .text
 global set_cr3
 global get_cr3
-
+global __invlpg_flush
 set_cr3:
     push ebp
     mov ebp, esp
@@ -21,4 +21,8 @@ get_cr3:
     mov ebp, esp
     mov eax, cr3
     leave
+    ret
+
+__invlpg_flush:
+    invlpg [0]
     ret

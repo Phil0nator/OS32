@@ -31,8 +31,8 @@ SECTIONS
         *(COMMON)
         *(.bss)
         *(.bootstrap_stack)
+        _kernel_end = .;
     }
-    _kernel_end = .;
 
     
 

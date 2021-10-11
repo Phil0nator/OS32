@@ -9,7 +9,8 @@
 #include "boot/mutiboot_info.h"
 #include "stdlib/kmalloc.h"
 #include "boot/page.h"
-
+#include "stdlib/string.h"
+#include "tests/kmalloc_unit.h"
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -84,6 +85,7 @@ void _kernel_main()
 
     __kernel_main_sti
 
+    __kmalloc_test();
 
     for(;;);
 

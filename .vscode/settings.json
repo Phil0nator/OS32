@@ -5,6 +5,8 @@
         "stdbool.h": "c",
         "idt.h": "c",
         "mutiboot_info.h": "c",
-        "page.h": "c"
+        "page.h": "c",
+        "multiboot.h": "c",
+        "kmalloc.h": "c"
     }
 }

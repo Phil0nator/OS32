@@ -4,7 +4,9 @@
 #include <stddef.h>
 
 #define PAGE_SIZE (4096)
-#define HUGE_PAGE_SIZE (4000000)
+#define HUGE_PAGE_SIZE (0x100000)
+
+
 
 typedef uint32_t phys_addr;
 
@@ -41,10 +43,12 @@ typedef struct page_table
 typedef struct page_dir
 {
     page_dir_ent_t tables[1024];
+    void* virtuals[1024];
 } page_dir_t;
 
 #pragma pack(0)
 
+extern page_dir_t boot_page_directory;
 
 phys_addr phys_addr_of( const void* virtual_addr );
 void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags );
@@ -52,5 +56,6 @@ const void* next_virt();
 
 void set_cr3( phys_addr a );
 phys_addr get_cr3();
+extern void __invlpg_flush();
 
 #endif

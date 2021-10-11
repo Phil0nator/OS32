@@ -27,13 +27,12 @@ dd 0x00400083
 dd 0x00800083
 dd 0x00c00083
 times (768-4) dd 0
-boot_page_table1:
 dd 0x00000083
 dd 0x00400083
 dd 0x00800083
 dd 0x00c00083
 times (1024-768) dd 0
-
+times (1024) dd 0
 
 section .text
 extern _kernel_start
@@ -58,10 +57,6 @@ _boot:
 section .text
 _boot_paged:
 
-    ; mov dword[boot_page_directory], 0
-
-    ; mov ecx, cr3
-    ; mov cr3, ecx
 
     add ebx, ADDROFF
     mov [__multiboot_info_temporary], ebx
