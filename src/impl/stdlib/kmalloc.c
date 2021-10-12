@@ -38,9 +38,9 @@ static phys_addr phys_end;
 static char physical_present[PAGE_SIZE * 32];
 
 // virtual address-space heap management
-static void* kmalloc_heap_start = KERNEL_HEAP_START;
+static void* kmalloc_heap_start = (void*) KERNEL_HEAP_START;
 // (the heap starts as 100 pages)
-static void* kmalloc_heap_end = KERNEL_HEAP_START+(PAGE_SIZE*100);
+static void* kmalloc_heap_end = (void*) KERNEL_HEAP_START+(PAGE_SIZE*100);
 
 // the initial page returned by kmalloc to set up paging
 static char bootstrap_page[PAGE_SIZE] __attribute__ ((aligned (PAGE_SIZE)));
@@ -59,40 +59,51 @@ struct kmalloc_header
     size_t size;
 };
 
-static struct kmalloc_header* kmalloc_heap;
+static struct kmalloc_header* kmalloc_heap_first;
+static struct kmalloc_header* kmalloc_heap_last;
 
 
 void kmalloc_push( struct kmalloc_header* h )
 {
-    h->prev = kmalloc_heap->prev;
+    if (!kmalloc_heap_last)
+    {
+        kmalloc_heap_last = h;
+        kmalloc_heap_first = h;
+        return;
+    }
+    kmalloc_heap_last->next = h;
+    h->prev = kmalloc_heap_last;
     h->next = NULL;
-    if (h->prev)
-        h->prev->next = h;
-    kmalloc_heap->prev = h;
+    kmalloc_heap_last = h;
 }
 
 void kmalloc_remove( struct kmalloc_header* h )
 {
-    if (h->prev)
+    if (h == kmalloc_heap_first)
+    {
+        kmalloc_heap_first = h->next;
+        kmalloc_heap_first->prev = NULL;
+    }
+    else if (h == kmalloc_heap_last)
+    {
+        kmalloc_heap_last = h->prev;
+        kmalloc_heap_last->next = NULL;
+    }
+    else
     {
         h->prev->next = h->next;
-    }
-    if (h->next)
-    {
         h->next->prev = h->prev;
     }
-    if (h == kmalloc_heap)
-    {
-        kmalloc_heap = h->prev;
-    }
-    h->prev = NULL;
+
+    
     h->next = NULL;
+    h->prev = NULL;
 }
 
 void kmalloc_split( struct kmalloc_header* h, size_t size )
 {
     int remaining_size = h->size - size - sizeof(struct kmalloc_header);
-    if (remaining_size <= sizeof(struct kmalloc_header))
+    if (remaining_size <= (int)sizeof(struct kmalloc_header))
     {
         return;
     }
@@ -104,15 +115,22 @@ void kmalloc_split( struct kmalloc_header* h, size_t size )
 
 void kmalloc_merge( struct kmalloc_header* h )
 {
-    struct kmalloc_header* it = kmalloc_heap;
+    struct kmalloc_header* it = kmalloc_heap_first;
     while (it)
     {
-        if ((((uint32_t)it) + sizeof(struct kmalloc_header) + it->size) == h)
+        if ((((uint32_t)it) + sizeof(struct kmalloc_header) + it->size) == (uint32_t)h)
         {
             it->size += sizeof(struct kmalloc_header) + h->size;
             return;
         }
-        if (it->next == kmalloc_heap) break;
+        else if ( (((uint32_t)h) + sizeof(struct kmalloc_header) + h->size) == (uint32_t)it )
+        {
+            h->size += sizeof(struct kmalloc_header) + it->size;
+            kmalloc_push(h);
+            kmalloc_remove(it);
+            return;
+        }
+        if (it->next == kmalloc_heap_last) break;
         it = it->next;
     }
     kmalloc_push(h);
@@ -120,28 +138,28 @@ void kmalloc_merge( struct kmalloc_header* h )
 
 struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
 {
-    struct kmalloc_header* ptr = kmalloc_heap;
+    struct kmalloc_header* ptr = kmalloc_heap_first;
     if (kmalloc_stage == 0) {
         kmalloc_stage ++;
-        return bootstrap_page;
+        return (struct kmalloc_header*) bootstrap_page;
     }
     else if (kmalloc_stage == 1)
     {
-        kmalloc_heap = kmalloc_heap_start;
-        kmalloc_heap->size = kmalloc_heap_end - kmalloc_heap_start - sizeof(struct kmalloc_header); 
-        kmalloc_heap->prev = kmalloc_heap;
-        ptr = kmalloc_heap;
+        kmalloc_heap_first = kmalloc_heap_start;
+        kmalloc_heap_first->size = kmalloc_heap_end - kmalloc_heap_start - sizeof(struct kmalloc_header); 
+        kmalloc_heap_last = kmalloc_heap_first;
+        ptr = kmalloc_heap_first;
         kmalloc_stage++;
     }
     while (ptr)
     {
-        if (ptr->size >= size && ( (size_t)ptr+sizeof(struct kmalloc_header) ) % align == 0 )
+        if (ptr->size >= size)
         {
             kmalloc_split( ptr, size );
             kmalloc_remove( ptr );
             return ptr;
         }
-        if (ptr->next == kmalloc_heap) break;
+        if (ptr->next == kmalloc_heap_last) break;
 
         ptr=ptr->next;
     }
@@ -166,7 +184,6 @@ void phys_free(phys_addr addr)
 
 phys_addr kmalloc_next_phys( )
 {
-
     for (size_t i = 0; i < sizeof(physical_present); i++)
     {
         if (physical_present[i])
@@ -184,41 +201,8 @@ phys_addr kmalloc_next_phys( )
             return i*PAGE_SIZE;
         }
     }
-
+    return 0;
 }
-
-
-err_t __install_kmalloc()
-{
-    phys_begin = KERNEL_PHYS_END;
-    phys_alloc_ptr = phys_begin;
-    phys_end = phys_begin+__multiboot_info.mem_upper*1000;
-
-    memset( physical_present, 0xff,(( 0x100000 + (KERNEL_PHYS_END-KERNEL_PHYS_START))/PAGE_SIZE)/8 );
-
-
-    alloc_pages( 100, KERNEL_HEAP_START, (page_table_ent_t){NULL} );
-    memset(kmalloc_heap_start, 0, 100*PAGE_SIZE);
-
-
-    return OS32_SUCCESS;
-}
-
-
-kmalloc_ptr kmalloc_page_struct( phys_addr* phys_dest )
-{
-    char* virt = kmalloc_alloc( PAGE_SIZE, PAGE_SIZE );
-    if (virt > KERNEL_HEAP_START)
-        *phys_dest = phys_addr_of(virt);
-    else
-        *phys_dest = virt-KERNEL_VIRTUAL; 
-    return virt;
-}
-
-// - one central physical allocator
-// - multiple specialize virtual address 'choosers'
-// - system to wire the pages
-// - proto malloc for before proper setup
 
 void alloc_pages( size_t count, void* virtual_addr, page_table_ent_t perms )
 {
@@ -236,6 +220,35 @@ void alloc_pages( size_t count, void* virtual_addr, page_table_ent_t perms )
     }
     set_cr3(get_cr3());
 }
+
+err_t __install_kmalloc()
+{
+    phys_begin = KERNEL_PHYS_END;
+    phys_alloc_ptr = phys_begin;
+    phys_end = phys_begin+__multiboot_info.mem_upper*1000;
+
+    memset( physical_present, 0xff,(( 0x100000 + (KERNEL_PHYS_END-KERNEL_PHYS_START))/PAGE_SIZE)/8 );
+
+
+    alloc_pages( 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){0} );
+    memset(kmalloc_heap_start, 0, 100*PAGE_SIZE);
+
+
+    return OS32_SUCCESS;
+}
+
+
+kmalloc_ptr kmalloc_page_struct( phys_addr* phys_dest )
+{
+    char* virt = (char*)kmalloc_alloc( PAGE_SIZE, PAGE_SIZE );
+    if (virt > (char*)KERNEL_HEAP_START)
+        *phys_dest = phys_addr_of(virt);
+    else
+        *phys_dest = virt-(char*)KERNEL_VIRTUAL; 
+    return virt;
+}
+
+
 kmalloc_ptr kmalloc( size_t size )
 {
 
@@ -244,9 +257,76 @@ kmalloc_ptr kmalloc( size_t size )
 }
 void kfree( kmalloc_ptr ptr )
 {
-    kmalloc_merge(((char*)ptr)-sizeof(struct kmalloc_header));
+    if (!ptr) return;
+    kmalloc_merge((struct kmalloc_header*)((char*)ptr)-sizeof(struct kmalloc_header));
 }
 void kprotect( kmalloc_ptr ptr)
 {
+    
+}
+kmalloc_ptr krealloc( kmalloc_ptr ptr, size_t size )
+{
+    // DNE
+    if (!ptr) return kmalloc(size);
+    struct kmalloc_header* header = (struct kmalloc_header*)((char*)ptr)-sizeof(struct kmalloc_header);
+    if ( header->size == size )
+    {
+        // same
+        return ptr;
+    }
+    else if (header->size < size)
+    {
+        // trunc
+        kmalloc_split(header, size);
+        return ptr;
+    }
+    else
+    {
+        // expand
+        kmalloc_ptr nptr = kmalloc(size);
+        memcpy(nptr, ptr, header->size);
+        kfree( ptr );
+        return nptr;
+    }
+}
+kmalloc_ptr kcalloc( size_t size )
+{
+    kmalloc_ptr out = kmalloc( size );
+    bzero( out, size );
+    return out;
+}
+size_t kmalloc_volume()
+{
+    struct kmalloc_header* it = kmalloc_heap_first;
+    size_t counter = 0;
+    while (it)
+    {
+        counter += sizeof(struct kmalloc_header) + it->size;
+        if (kmalloc_heap_last == it->next) break;
+        it = it->next;
+    }
+    return counter;
+}
 
+struct kmalloc_header* kmalloc_header_index( size_t idx )
+{
+    struct kmalloc_header* it = kmalloc_heap_first;
+    while (it && idx)
+    {
+        idx--;
+        if (kmalloc_heap_last == it->next) break;
+        it = it->next;
+    }
+    return it;
+}
+
+void kmalloc_defrag()
+{
+    size_t counter = 0;
+    struct kmalloc_header* it = NULL;
+    while ( (it = kmalloc_header_index(counter++)) != NULL )
+    {
+        kmalloc_remove(it);
+        kmalloc_merge(it);
+    }
 }

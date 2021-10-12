@@ -10,6 +10,13 @@ void memset( void* dest, char byte, size_t count )
     for(;count;count--) ((char*)dest)[count-1] = byte;
 }
 
+
+void bzero( char* dest, size_t bytes )
+{
+    for (;bytes;bytes--) dest[bytes-1] = 0;
+}
+
+
 void memmove( void* dest, const void* source, size_t bytes )
 {
     if (dest < source)

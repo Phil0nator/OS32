@@ -7,6 +7,7 @@
         "mutiboot_info.h": "c",
         "page.h": "c",
         "multiboot.h": "c",
-        "kmalloc.h": "c"
+        "kmalloc.h": "c",
+        "streambuf.h": "c"
     }
 }
