@@ -11,7 +11,7 @@ phys_addr phys_addr_of( const void* virtual_addr )
     uint32_t directory_idx = ((uint32_t)virtual_addr) >> 22;
     uint32_t table_idx = ((uint32_t)virtual_addr) >> 12 & 0x03FF;
     page_table_t* table = (page_table_t*) boot_page_directory.virtuals[directory_idx];
-    return table->pages[table_idx].addr * PAGE_SIZE;
+    return table->pages[table_idx].frame * PAGE_SIZE;
 }
 
 #pragma pack(1)
@@ -37,17 +37,26 @@ void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags )
         phys_addr tphys;
         table = kmalloc_page_struct((phys_addr*)(&tphys));
         memset(table, 0, PAGE_SIZE);
-        boot_page_directory.tables[directory_idx].frame = tphys >> 12;
-        boot_page_directory.tables[directory_idx].present = 1;
-        boot_page_directory.tables[directory_idx].rw = 1;
+        // boot_page_directory.tables[directory_idx].frame = tphys >> 12;
+        // *(uint32_t*)&boot_page_directory.tables[directory_idx] = tphys;
+        // boot_page_directory.tables[directory_idx].present = 1;
+        // boot_page_directory.tables[directory_idx].rw = 1;
+        // *(uint32_t*)&boot_page_directory.tables[directory_idx] |= 3;
+        PAGE_SET_ADDR( boot_page_directory.tables[directory_idx], tphys );
+        PAGE_SET_BIT(boot_page_directory.tables[directory_idx], PAGE_PRESENT, 1);
+        PAGE_SET_BIT(boot_page_directory.tables[directory_idx], PAGE_RW, 1);
         boot_page_directory.virtuals[directory_idx] = table;
     }
-    page_table_ent_t* te = &table->pages[table_idx];
+    page_dir_ent_t* te = &table->pages[table_idx];
 
-    *te = flags;
-    te->addr = phys >> 12;
-    te->present = 1;
-    te->rw = 1;
+    // *(uint32_t*)te = phys | (*(uint32_t*)&flags) | 3;
+    PAGE_SET_ADDR(*te, 0);
+    te->frame = phys >> 12 & 0x03FF;
+    // te->present = 1;
+    // te->rw = 1;
+    // PAGE_SET_ADDR(*te, phys);
+    PAGE_SET_BIT(*te, PAGE_PRESENT, 1);
+    PAGE_SET_BIT(*te, PAGE_RW, 1);
     __invlpg_flush();
 }
 

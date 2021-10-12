@@ -7,7 +7,9 @@ void memcpy( void * dest, const void * source, size_t bytes )
 }
 void memset( void* dest, char byte, size_t count )
 {
-    for(;count;count--) ((char*)dest)[count-1] = byte;
+    for(;count;count--){
+        ((char*)dest)[count-1] = byte;
+    }
 }
 
 

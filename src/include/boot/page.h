@@ -5,8 +5,13 @@
 
 #define PAGE_SIZE (4096)
 #define HUGE_PAGE_SIZE (0x100000)
+#define PAGE_INTIZE( ent ) (*(uint32_t*)(&ent))
+#define PAGE_SET_ADDR(ent, addr)(PAGE_INTIZE(ent) = (addr))
+#define PAGE_SET_BIT( ent, bit, val ) (PAGE_INTIZE(ent) = (val) ? (PAGE_INTIZE(ent)|(1<<bit)) : (PAGE_INTIZE(ent)&~(1<<bit)) )
 
-
+#define PAGE_PRESENT 0
+#define PAGE_RW 1
+#define PAGE_USER 2
 
 typedef uint32_t phys_addr;
 
@@ -37,7 +42,7 @@ typedef struct page_dir_ent
 
 typedef struct page_table
 {
-    page_table_ent_t pages[1024];
+    page_dir_ent_t pages[1024];
 } page_table_t;
 
 typedef struct page_dir

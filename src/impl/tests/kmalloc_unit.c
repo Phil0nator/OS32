@@ -13,9 +13,17 @@ void __kmalloc_test()
         }
         for (size_t j = 0; j < 10; j++)
         {
-            vgaPuts(test[j]);
+            // vgaPuts(test[j]);
             kfree(test[j]);
         }
         kfree(test);
     }
+
+    kmalloc_defrag();
+
+    char* t2 = kcalloc(40960);
+    kfree(t2);
+
+    kmalloc_defrag();
+
 }
