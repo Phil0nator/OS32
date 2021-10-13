@@ -21,7 +21,7 @@ struct gdt_ptr
 
 #pragma pack(0)
 
-struct gdt_entry __gdt[3];
+struct gdt_entry __gdt[8];
 struct gdt_ptr __gdt_ptr;
 
 
@@ -49,13 +49,16 @@ err_t gdt_set_gate(
 
 err_t __install_gdt()
 {
-    __gdt_ptr.limit = (sizeof(struct gdt_entry) * 3)-1;
+    __gdt_ptr.limit = (sizeof(__gdt))-1;
     __gdt_ptr.base = (uint32_t) &__gdt;
 
-    gdt_set_gate( 0,0,0,0,0 );
-    gdt_set_gate( 1, 0, 0xFFFFFFFF, 0x9A, 0xCF );
-    gdt_set_gate( 2, 0, 0xFFFFFFFF, 0x92, 0xCF );
+    gdt_set_gate( 0,0,0,0,0 ); // NUll entry
+    gdt_set_gate( 1, 0, 0xFFFFFFFF, 0x9A, 0xCF ); // kernel code
+    gdt_set_gate( 2, 0, 0xFFFFFFFF, 0x92, 0xCF ); // kernel data
+    gdt_set_gate( 4, 0, 0xFFFFFFFF, 0x9A | (((3) &  0x03) << 0x05), 0xCF ); // user code
+    gdt_set_gate( 5, 0, 0xFFFFFFFF, 0x92 | (((3) &  0x03) << 0x05), 0xCF ); // user data
     
+
     gdt_flush();
     return OS32_SUCCESS;
 }

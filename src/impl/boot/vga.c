@@ -17,18 +17,9 @@ static struct {
 static vgac_t cur_fg = VGA_WHITE;
 static vgac_t cur_bg = VGA_BLACK;
 
-#pragma pack(1)
 
-typedef struct VGACell
-{
-    char c;
-    vgac_t fg:4;
-    vgac_t bg:4;
-} VGACell_t;
+VGACell_t* VGAO = (VGACell_t*)(0xc00b8000);
 
-#pragma pack(0)
-
-static VGACell_t* VGAO = (VGACell_t*)(0xc00b8000);
 
 static void VGAScroll()
 {
@@ -245,4 +236,20 @@ void vgaSetFg( vgac_t fg )
 void vgaSetBg( vgac_t bg )
 {
     cur_bg = bg;
+}
+
+void vgaSetCursor( int x, int y )
+{
+    cursor.x = x;
+    cursor.y = y;
+    VGAUpdateCursor();
+}
+void vgaGetCursor( int* x, int* y )
+{
+    *x = cursor.x;
+    *y = cursor.y;
+}
+void vgaShowCursor( bool show )
+{
+    
 }

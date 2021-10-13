@@ -271,7 +271,7 @@ void kfree( kmalloc_ptr ptr )
 }
 void kprotect( kmalloc_ptr ptr)
 {
-    
+    struct kmalloc_header* h = (struct kmalloc_header*)(((char*)ptr)-sizeof(struct kmalloc_header));
 }
 kmalloc_ptr krealloc( kmalloc_ptr ptr, size_t size )
 {

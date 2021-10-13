@@ -27,7 +27,8 @@ typedef struct va_conv
 void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags )
 {
     va_conv_t converter;
-    *(uint32_t*)(&converter) = (uint32_t) virt;
+    memcpy( &converter, &virt, sizeof(virt) );
+    // *(uint32_t*)(&converter) = (uint32_t) virt;
     uint32_t directory_idx = converter.di;
     uint32_t table_idx = converter.ti;
 
@@ -37,26 +38,26 @@ void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags )
         phys_addr tphys;
         table = kmalloc_page_struct((phys_addr*)(&tphys));
         memset(table, 0, PAGE_SIZE);
-        // boot_page_directory.tables[directory_idx].frame = tphys >> 12;
+        boot_page_directory.tables[directory_idx].frame = tphys >> 12;
         // *(uint32_t*)&boot_page_directory.tables[directory_idx] = tphys;
-        // boot_page_directory.tables[directory_idx].present = 1;
-        // boot_page_directory.tables[directory_idx].rw = 1;
+        boot_page_directory.tables[directory_idx].present = 1;
+        boot_page_directory.tables[directory_idx].rw = 1;
         // *(uint32_t*)&boot_page_directory.tables[directory_idx] |= 3;
-        PAGE_SET_ADDR( boot_page_directory.tables[directory_idx], tphys );
-        PAGE_SET_BIT(boot_page_directory.tables[directory_idx], PAGE_PRESENT, 1);
-        PAGE_SET_BIT(boot_page_directory.tables[directory_idx], PAGE_RW, 1);
+        // PAGE_SET_ADDR( boot_page_directory.tables[directory_idx], tphys );
+        // PAGE_SET_BIT(boot_page_directory.tables[directory_idx], PAGE_PRESENT, 1);
+        // PAGE_SET_BIT(boot_page_directory.tables[directory_idx], PAGE_RW, 1);
         boot_page_directory.virtuals[directory_idx] = table;
     }
     page_dir_ent_t* te = &table->pages[table_idx];
 
-    // *(uint32_t*)te = phys | (*(uint32_t*)&flags) | 3;
-    PAGE_SET_ADDR(*te, 0);
+    *(uint32_t*)te = phys | (*(uint32_t*)&flags) | 3;
+    // PAGE_SET_ADDR(*te, 0);
     te->frame = phys >> 12 & 0x03FF;
-    // te->present = 1;
-    // te->rw = 1;
+    te->present = 1;
+    te->rw = 1;
     // PAGE_SET_ADDR(*te, phys);
-    PAGE_SET_BIT(*te, PAGE_PRESENT, 1);
-    PAGE_SET_BIT(*te, PAGE_RW, 1);
+    // PAGE_SET_BIT(*te, PAGE_PRESENT, 1);
+    // PAGE_SET_BIT(*te, PAGE_RW, 1);
     __invlpg_flush();
 }
 

@@ -1,6 +1,7 @@
 #ifndef OS32_VGA
 #define OS32_VGA
 #include <stdint.h>
+#include <stdbool.h>
 
 #define VGA_BLACK (0)
 #define VGA_BLUE (1)
@@ -25,6 +26,18 @@
 #define VGA_HEIGHT (25)
 
 typedef uint8_t vgac_t;
+extern struct VGACell* VGAO;
+
+#pragma pack(1)
+
+typedef struct VGACell
+{
+    char c;
+    vgac_t fg:4;
+    vgac_t bg:4;
+} VGACell_t;
+
+#pragma pack(0)
 
 void vgaPutc( char c );
 void vgaPuts( const char* msg );
@@ -36,7 +49,9 @@ vgac_t vgaGetFg();
 vgac_t vgaGetBg();
 void vgaSetFg( vgac_t fg );
 void vgaSetBg( vgac_t bg );
-
+void vgaSetCursor( int x, int y );
+void vgaGetCursor( int* x, int* y );
+void vgaShowCursor( bool show );
 
 #endif
 

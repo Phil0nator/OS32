@@ -1,0 +1,6 @@
+#ifndef OS32_MULTITASKING
+#define OS32_MULTITASKING
+
+
+
+#endif

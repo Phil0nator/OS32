@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -F dwarf -O0 -m32 -Isrc/include -c -ffreestanding -nostdlib -mno-red-zone -Wall -Wextra
+CFLAGS = -g -F dwarf -Os -m32 -Isrc/include -c -ffreestanding -nostdlib -mno-red-zone -Wall -Wextra
 
 ASMSRC := $(shell find src/ -name "*.asm")
 ASMOUT := $(patsubst src/%.asm, build/%.o, ${ASMSRC} )

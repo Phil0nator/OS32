@@ -12,13 +12,17 @@
 #include "stdlib/string.h"
 #include "tests/kmalloc_unit.h"
 #include "stdlib/streambuf.h"
+#include "realtime/vga/rtvgamain.h"
+#include "boot/tss.h"
+
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
 
 void testfn()
 {
-    vgaPrintf("Hello\n");
+    __kernel_main_sti
+
 }
 
 void _kernel_main()
@@ -56,14 +60,21 @@ void _kernel_main()
 
     if ( __install_irq() == OS32_ERROR )
     {
-        vgaPrintf("%- IRQs setup");
+        vgaPrintf("%- IRQs setup\n");
         __kernel_main_hlt
     }
     vgaPrintf("%+ IRQs Installed\n");
     
+    if ( __install_tss() == OS32_ERROR )
+    {
+        vgaPrintf("%- TSS setup\n");
+        __kernel_main_hlt
+    }
+    vgaPrintf("%+ TSS setup\n");
+
     if ( __install_timer() == OS32_ERROR )
     {
-        vgaPrintf("%- PIT setup");
+        vgaPrintf("%- PIT setup\n");
         __kernel_main_hlt
     }
     vgaPrintf("%+ PIT Installed\n");
@@ -82,13 +93,19 @@ void _kernel_main()
     }
     vgaPrintf("%+ kmalloc setup\n");
 
+
     idt_update();
 
     __kernel_main_sti
 
-    __kmalloc_test();
+    // tss_enter_usermode( testfn );
 
-    
+    // __kmalloc_test();
+
+    // enter desktop mode:
+    vgaPrintf("%+ Entering desktop mode...\n");
+    pit_waits(1);
+    rtvgamain();
 
     for(;;);
 
