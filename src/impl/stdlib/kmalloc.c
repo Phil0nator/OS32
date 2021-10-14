@@ -213,7 +213,7 @@ phys_addr kmalloc_next_phys( )
     return 0;
 }
 
-void alloc_pages( size_t count, void* virtual_addr, page_table_ent_t perms )
+void kmalloc_alloc_pages( size_t count, void* virtual_addr, page_table_ent_t perms )
 {
     // setup
     while (count--)
@@ -239,7 +239,7 @@ err_t __install_kmalloc()
     memset( physical_present, 0xff,(( 0x100000 + (KERNEL_PHYS_END-KERNEL_PHYS_START))/PAGE_SIZE)/8 );
 
 
-    alloc_pages( 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){0} );
+    kmalloc_alloc_pages( 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){0} );
     memset(kmalloc_heap_start, 0, 100*PAGE_SIZE);
 
 

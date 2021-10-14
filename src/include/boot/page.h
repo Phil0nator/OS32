@@ -9,35 +9,35 @@
 #define PAGE_SET_ADDR(ent, addr)(PAGE_INTIZE(ent) = (addr))
 #define PAGE_SET_BIT( ent, bit, val ) (PAGE_INTIZE(ent) = (val) ? (PAGE_INTIZE(ent)|(1<<bit)) : (PAGE_INTIZE(ent)&~(1<<bit)) )
 
-#define PAGE_PRESENT 0
-#define PAGE_RW 1
-#define PAGE_USER 2
+#define PAGE_PRESENT    0
+#define PAGE_RW         1
+#define PAGE_USER       2
 
 typedef uint32_t phys_addr;
 
 #pragma pack(1)
 typedef struct page_table_ent
 {
-    uint32_t present: 1;
-    uint32_t rw: 1;
-    uint32_t user: 1;
-    uint32_t writethrough: 1;
-    uint32_t nocache: 1;
-    uint32_t accessed: 1;
-    uint32_t size: 1;
-    uint32_t ignored: 4;
-    uint32_t addr: 20;
+    uint32_t present:       1;
+    uint32_t rw:            1;
+    uint32_t user:          1;
+    uint32_t writethrough:  1;
+    uint32_t nocache:       1;
+    uint32_t accessed:      1;
+    uint32_t size:          1;
+    uint32_t ignored:       4;
+    uint32_t addr:          20;
 } page_table_ent_t;
 
 typedef struct page_dir_ent
 {
-    uint32_t present: 1;
-    uint32_t rw: 1;
-    uint32_t user: 1;
-    uint32_t accessed: 1;
-    uint32_t dirty: 1;
+    uint32_t present:       1;
+    uint32_t rw:            1;
+    uint32_t user:          1;
+    uint32_t accessed:      1;
+    uint32_t dirty:         1;
     uint32_t reserved_bits: 7;
-    uint32_t frame: 20;
+    uint32_t frame:         20;
 } page_dir_ent_t;
 
 typedef struct page_table

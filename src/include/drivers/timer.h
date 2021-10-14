@@ -4,9 +4,18 @@
 #include <stddef.h>
 #include "stdlib/error.h"
 
-#define PIT_TPS ((float)18.222)
-#define PIT_SECS( ticks ) ((ticks)/PIT_TPS)
-#define PIT_TICKS( secs ) ((secs)*PIT_TPS)
+/**
+ * PIT devices Ticks per Second
+ */
+#define PIT_TPS             ((float)18.222)
+/**
+ * Convert PIT ticks to seconds
+ */
+#define PIT_SECS( ticks )   ((ticks)/PIT_TPS)
+/**
+ * Convert seconds to PIT ticks
+ */
+#define PIT_TICKS( secs )   ((secs)*PIT_TPS)
 
 typedef size_t pit_ticks_t;
 typedef float pit_secs_t;

@@ -3,20 +3,19 @@
 #include "drivers/rtc.h"
 #include "realtime/vga/topbar.h"
 #include "drivers/timer.h"
+#include "stdlib/string.h"
 
+static const char testerchar[81] = {'\0'};
 
 void rtvgamain()
 {
+    // memset(testerchar, 205, 80 );
+    rtvga_cls( VGA_BLACK );
     while(1)
     {
         rtvga_topbar_flip();
 
-        rtvga_cls( VGA_BLACK );
-        vgaSetBg( VGA_LIGHT_GRAY );
-        vgaSetFg( VGA_WHITE );
-        vgaSetCursor(0,0);
-        vgaPuts( rtvga_topbar );
-        pit_waitt(5);
+        
     }
 
     for(;;);

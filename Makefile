@@ -17,7 +17,7 @@ $(COUT): build/%.o : src/%.c
 
 OS32: $(COUT) $(ASMOUT)
 	mkdir -p dist/x86 && \
-	ld -melf_i386 -n -o targets/x86/iso/boot/kernel.elf -T targets/x86/linker.ld $(ASMOUT) $(COUT) && \
+	ld -O3 -melf_i386 -n -o targets/x86/iso/boot/kernel.elf -T targets/x86/linker.ld $(ASMOUT) $(COUT) && \
 	cp targets/x86/iso/boot/kernel.elf dist/x86/kernel.elf && \
 	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86/kernel.iso targets/x86/iso
 

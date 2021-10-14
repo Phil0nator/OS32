@@ -1,6 +1,7 @@
 #ifndef OS32_DT
 #define OS32_DT
 #include <stdlib/streambuf.h>
+#include "filesystems/types.h"
 typedef int descriptor_type;
 typedef int fd_t;
 

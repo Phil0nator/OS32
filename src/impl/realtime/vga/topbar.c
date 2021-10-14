@@ -11,6 +11,9 @@ char rtvga_topbar[VGA_WIDTH];
 void rtvga_topbar_flip()
 {
     rtc_timepoint_t tm;
+    char prev_topbar[VGA_WIDTH];
+    memcpy(prev_topbar, rtvga_topbar, VGA_WIDTH);
+
     rtc_get_time(&tm);
     // |MMM DD HH:MM
     char date[13] = {'\0'};
@@ -35,5 +38,13 @@ void rtvga_topbar_flip()
     memset( rtvga_topbar+VGA_WIDTH-2, '>', 2 );
     memcpy( (rtvga_topbar+VGA_WIDTH/2)-(strlen(date)/2), date, 12 );
     
+
+    if (!memequ( prev_topbar, rtvga_topbar, VGA_WIDTH ))
+    {
+        vgaSetBg( VGA_LIGHT_GRAY );
+        vgaSetFg( VGA_WHITE );
+        vgaSetCursor(0,0);
+        vgaPuts( rtvga_topbar );
+    }
 
 }
