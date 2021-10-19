@@ -5,7 +5,7 @@
 #include <stdbool.h>
 
 typedef int fd_t;
-
+typedef int dev_t;
 
 
 

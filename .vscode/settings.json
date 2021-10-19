@@ -9,6 +9,9 @@
         "multiboot.h": "c",
         "kmalloc.h": "c",
         "streambuf.h": "c",
-        "format.h": "c"
+        "format.h": "c",
+        "limits": "cpp",
+        "*.tcc": "cpp",
+        "type_traits": "cpp"
     }
 }

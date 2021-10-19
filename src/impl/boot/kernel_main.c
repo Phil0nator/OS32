@@ -14,7 +14,7 @@
 #include "stdlib/streambuf.h"
 #include "realtime/vga/rtvgamain.h"
 #include "boot/tss.h"
-
+#include "stdlib/cpuid.h"
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -102,10 +102,12 @@ void _kernel_main()
 
     // __kmalloc_test();
 
+
     // enter desktop mode:
     vgaPrintf("%+ Entering desktop mode...\n");
     pit_waits(1);
     rtvgamain();
+
 
     for(;;);
 

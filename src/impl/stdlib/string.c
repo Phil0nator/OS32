@@ -63,3 +63,14 @@ size_t strlen( const char* data )
     while (*(data++));
     return data-og;
 }
+size_t strchr( const char* str, char chr )
+{
+    const char* ogstr = str;
+    while (*str && *str != chr) str++;
+    return *str == chr ? str-ogstr : -1; 
+}
+bool strequ( const char* a, const char* b )
+{
+    for (;*a==*b;a++,b++);
+    return *a==*b;
+}

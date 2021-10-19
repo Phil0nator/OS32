@@ -1,5 +1,6 @@
 #include "system/filesystems/ext2/ext2.h"
 #include "stdlib/time.h"
+#include "stdlib/string.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -19,8 +20,7 @@ typedef uint32_t ext2_osid;
 #define EXT2_OSID_BSD       3
 #define EXT2_OSID_LITES     4
 
-typedef uint16_t ext2_uid;
-typedef uint16_t ext2_gid;
+
 
 typedef uint32_t ext2_optionals;
 #define EXT2_OPTIONAL_PREALLOCDIR   0x0001
@@ -90,6 +90,10 @@ typedef uint8_t ext2_dirent_type_t;
 #define EXT2_DIRENT_TYPE_SYMLN      7
 
 
+#define EXT2_EXTENDEDSUPER_VERNO    1
+#define EXT2_ROOT_INODE             2
+
+
 #pragma pack(1)
 //https://wiki.osdev.org/Ext2
 typedef struct ext2_base_superblock
@@ -123,6 +127,7 @@ typedef struct ext2_base_superblock
 
 typedef struct ext2_superblock_extended
 {
+    ext2_base_superblock_t base;
     uint32_t fnr_inode;     // first non-reserved inode
     uint16_t inode_s;       // size of inode in bytes
     uint16_t this_blg;      // the block group containing the superblock
@@ -231,20 +236,172 @@ typedef struct ext2_dirent_head
     };    
 } ext2_dirent_head_t;
 
+typedef struct fd_rel
+{
+    ext2_inode_t* inode;
+} fd_rel_t;
+
 typedef struct ext2_partition
 {
+    char* raw_data;
     union
     {
         ext2_base_superblock_t* base_superbock;
         ext2_superblock_extended_t* extended_superblock;
     };
+
+    ext2_block_group_descriptor_t* bgd;
+    ext2_inode_t* root;
+
+    size_t block_size;
+    size_t frag_size;
+    size_t inode_size;
+
+
+    fd_rel_t relations[EXT2_MAX_OPEN];
+    
 } ext2_partition_t;
 
-void ext2_init( struct ext2_partition* dest, char* raw );
-void ext2_free( struct ext2_partition* p, bool freeRaw );
-char* ext2_get_raw( struct ext2_partition* p );
+ext2_inode_t* ext2_get_inode( struct ext2_partition* src, size_t index )
+{
+    return (ext2_inode_t*)(src->raw_data + src->bgd->inodes_start*src->block_size + index*src->inode_size);
+}
 
-fd_t ext2_open( struct ext2_partition* p, const char* fname );
+char* ext2_get_block( struct ext2_partition* src, uint32_t blockno )
+{
+    return (src->raw_data)+blockno*src->block_size;
+}
+
+size_t ext2_read_direct( struct ext2_partition* p, ext2_inode_t* src, char* buf, size_t bytes, size_t start )
+{
+    size_t total_read = 0;
+    size_t direct_idx = start / p->block_size;
+    size_t last_block = (start+bytes) / p->block_size;
+    for(; direct_idx <= last_block; direct_idx++)
+    {
+        uint32_t blockno = src->direct[direct_idx];
+        char* data = ext2_get_block(p, blockno);
+        size_t readamt = bytes < p->block_size ? bytes : p->block_size;
+        memcpy( buf, data, readamt );
+        buf += readamt;
+        total_read += readamt;
+        bytes -= readamt;
+    }
+    return total_read;
+}
+
+size_t ext2_read_bytes( struct ext2_partition* p, ext2_inode_t* src, char* buf, size_t bytes, size_t start )
+{
+    size_t total_read = 0;
+    if (start/p->block_size <= 12)
+    {
+        size_t bytes_read = ext2_read_direct( p, src, buf, bytes, start );
+        bytes -= bytes_read;
+        start += bytes_read;
+        buf   += bytes_read;
+        total_read += bytes_read;
+    }
+
+    return total_read;
+}
+
+uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* name )
+{
+    char buffer[1024];
+    for(size_t iter = 0; 1; iter++ )
+    {
+        if (ext2_read_bytes( p, dir, buffer, sizeof(buffer), iter ) <= 0) return OS32_ERROR;
+        for 
+        (
+            ext2_dirent_head_t* head = (ext2_dirent_head_t*) buffer; 
+            (char*)head != buffer+sizeof(buffer); 
+            head = (ext2_dirent_head_t*)(((char*)head)+head->size)
+        )
+        {
+            char* cur_name = ((char*)head)+sizeof(ext2_dirent_head_t);
+            if (strequ(cur_name, name))
+            {
+                return head->inode;
+            }
+        } 
+    }
+    return OS32_ERROR;
+}
+
+
+ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path )
+{
+    if (path[0] != '/') return OS32_FAILED;
+    if ( strequ( path, "/" ) ) return src->root;
+    path++;
+    char fname[256];
+
+    ext2_inode_t* cur_dir = src->root;
+    
+    while (true)
+    {
+        uint32_t next_slash = strchr(path, '/');
+        bzero(fname, sizeof(fname));
+        memcpy( fname, path, next_slash );
+        path+=next_slash+1;
+        uint32_t next_inode = 0;
+        if ( (next_inode = ext2_find_in_dir( src, cur_dir, fname )) == OS32_ERROR )
+        {
+            return OS32_FAILED;
+        }
+        cur_dir = ext2_get_inode( src, next_inode );
+        if (*path == '\0') break;
+    }
+    return cur_dir;
+}
+
+err_t ext2_init( struct ext2_partition* dest, char* raw )
+{
+    bzero(dest, sizeof(struct ext2_partition));
+    dest->raw_data = raw;
+    dest->base_superbock = raw + 1024;
+    if (dest->base_superbock->sig != EXT2_SIGNATURE)
+    {
+        return OS32_ERROR;
+    }
+    dest->block_size = 1024 << dest->base_superbock->bl_size;
+    dest->frag_size = 1024 << dest->base_superbock->bl_size;
+    dest->bgd = raw + 2048;
+    if (dest->base_superbock->ver_maj >= 1)
+    {
+        dest->inode_size = dest->extended_superblock->inode_s;
+    }
+    else
+    {
+        dest->inode_size = 128;
+    }
+    dest->root = ext2_get_inode( dest, EXT2_ROOT_INODE );
+
+}
+void ext2_free( struct ext2_partition* p, bool freeRaw )
+{
+}
+
+fd_t ext2_open( struct ext2_partition* p, const char* fname )
+{
+    if (p->base_superbock->sig != EXT2_SIGNATURE)
+    {
+        return OS32_ERROR;
+    }
+    ext2_inode_t* in = ext2_getf( p, fname );
+    if (in == OS32_FAILED) return OS32_ERROR;
+    fd_t fd = 0;
+    for (; fd < EXT2_MAX_OPEN; fd++)
+    {
+        if ( !p->relations[fd].inode )
+        {
+            p->relations[fd].inode = in;
+            return fd;
+        }
+    }
+    return OS32_FAILED;
+    
+}
 size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes );
 size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes );
 size_t ext2_seekg(struct ext2_partition* p, fd_t fd, size_t amt, int whence );
@@ -255,5 +412,17 @@ err_t ext2_close(struct ext2_partition* p, fd_t fd );
 
 
 
+err_t ext2_stat(struct ext2_partition* p, const char* path, struct ext2_fstat* buf)
+{
+
+}
+err_t ext2_fstat(struct ext2_partition* p, fd_t fd, struct ext2_fstat* buf)
+{
+
+}
+err_t ext2_lstat(struct ext2_partition* p, const char* path, struct ext2_fstat* buf)
+{
+
+}
 
 #pragma pack(0)
