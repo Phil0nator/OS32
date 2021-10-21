@@ -2,6 +2,7 @@
 
 %define ALIGN (1)
 %define MEMINFO  (2)
+%define MODS (8)
 %define MBFLAGS  (ALIGN | MEMINFO)
 %define MAGIC  (0x1BADB002)
 %define CHECKSUM  (-(MAGIC + MBFLAGS))

@@ -2,6 +2,7 @@
 #define OS32_STRING
 #include <stddef.h>
 #include <stdbool.h>
+#include <stdlib/error.h>
 
 void memcpy( void * dest, const void * source, size_t bytes );
 void memset( void * dest, char byte, size_t count );
@@ -16,5 +17,6 @@ size_t strncpy( char* dest, size_t n, const char* src );
 size_t strlen( const char* data );
 size_t strchr( const char* str, char chr );
 bool strequ( const char* a, const char* b );
+const char* strerror( errno_t e );
 
 #endif

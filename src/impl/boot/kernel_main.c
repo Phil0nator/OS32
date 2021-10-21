@@ -15,6 +15,8 @@
 #include "realtime/vga/rtvgamain.h"
 #include "boot/tss.h"
 #include "stdlib/cpuid.h"
+#include "system/filesystems/linitrd.h"
+#include "tests/initrdext2.h"
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -86,21 +88,26 @@ void _kernel_main()
     }
     vgaPrintf("%+ KB Installed\n");
 
-    if ( __install_kmalloc() )
+    if ( __install_kmalloc() == OS32_ERROR )
     {
         vgaPrintf("%- kmalloc setup");
         __kernel_main_hlt
     }
     vgaPrintf("%+ kmalloc setup\n");
 
-
+    if ( __install_initrd() == OS32_ERROR )
+    {
+        vgaPrintf("%- initrd\n");
+    }
+    vgaPrintf("%+ initrd\n");
+    
     idt_update();
 
     __kernel_main_sti
 
     // tss_enter_usermode( testfn );
 
-    // __kmalloc_test();
+    __initrdext2_test();
 
 
     // enter desktop mode:

@@ -6,4 +6,4 @@ This is a 32bit x86 hobby kernel I have been putting together with help from [os
 - Grub
 - Multiboot
 - Xorriso
-- gcc/ld
+- gcc/ld/nasm for i386

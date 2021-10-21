@@ -230,6 +230,14 @@ void kmalloc_alloc_pages( size_t count, void* virtual_addr, page_table_ent_t per
     set_cr3(get_cr3());
 }
 
+void phys_reserve_pages( phys_addr start, phys_addr end )
+{
+    for (;start < end; start += PAGE_SIZE)
+    {
+        phys_reserve(start);
+    }
+}
+
 err_t __install_kmalloc()
 {
     phys_begin = KERNEL_PHYS_END;
@@ -238,6 +246,12 @@ err_t __install_kmalloc()
 
     memset( physical_present, 0xff,(( 0x100000 + (KERNEL_PHYS_END-KERNEL_PHYS_START))/PAGE_SIZE)/8 );
 
+    for ( size_t i = 0; i < __multiboot_info.mods_count; i++ )
+    {
+        module_t* mod = &((module_t*)__multiboot_info.mods_addr)[i];
+        phys_reserve_pages( mod->mod_start, mod->mod_end );
+        
+    }
 
     kmalloc_alloc_pages( 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){0} );
     memset(kmalloc_heap_start, 0, 100*PAGE_SIZE);

@@ -1,5 +1,6 @@
 #include "system/filesystems/ext2/ext2.h"
 #include "stdlib/time.h"
+#include "stdlib/kmalloc.h"
 #include "stdlib/string.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -325,6 +326,7 @@ uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* na
             }
         } 
     }
+    __set_errno( ENOENT );
     return OS32_ERROR;
 }
 
@@ -342,31 +344,37 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path )
     {
         uint32_t next_slash = strchr(path, '/');
         bzero(fname, sizeof(fname));
-        memcpy( fname, path, next_slash );
-        path+=next_slash+1;
+        if (next_slash != -1)
+        {
+            memcpy( fname, path, next_slash );
+            path+=next_slash+1;
+        }
         uint32_t next_inode = 0;
         if ( (next_inode = ext2_find_in_dir( src, cur_dir, fname )) == OS32_ERROR )
         {
             return OS32_FAILED;
         }
         cur_dir = ext2_get_inode( src, next_inode );
-        if (*path == '\0') break;
+        if (next_slash == -1) break;
     }
     return cur_dir;
 }
 
-err_t ext2_init( struct ext2_partition* dest, char* raw )
+err_t ext2_init( struct ext2_partition** _dest, char* raw )
 {
+    *_dest = kmalloc( sizeof(struct ext2_partition) );
+    struct ext2_partition* dest = *_dest;
     bzero(dest, sizeof(struct ext2_partition));
     dest->raw_data = raw;
     dest->base_superbock = raw + 1024;
     if (dest->base_superbock->sig != EXT2_SIGNATURE)
     {
+        __set_errno( EPERM );
         return OS32_ERROR;
     }
     dest->block_size = 1024 << dest->base_superbock->bl_size;
-    dest->frag_size = 1024 << dest->base_superbock->bl_size;
-    dest->bgd = raw + 2048;
+    dest->frag_size = 1024 << dest->base_superbock->bl_size ;
+    dest->bgd = raw + 1024 + 1024;
     if (dest->base_superbock->ver_maj >= 1)
     {
         dest->inode_size = dest->extended_superblock->inode_s;
@@ -380,12 +388,14 @@ err_t ext2_init( struct ext2_partition* dest, char* raw )
 }
 void ext2_free( struct ext2_partition* p, bool freeRaw )
 {
+    kfree(p);
 }
 
 fd_t ext2_open( struct ext2_partition* p, const char* fname )
 {
     if (p->base_superbock->sig != EXT2_SIGNATURE)
     {
+        __set_errno(EPERM);
         return OS32_ERROR;
     }
     ext2_inode_t* in = ext2_getf( p, fname );
@@ -399,6 +409,7 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
             return fd;
         }
     }
+    __set_errno(EMFILE);
     return OS32_FAILED;
     
 }

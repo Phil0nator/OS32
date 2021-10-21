@@ -26,7 +26,7 @@ struct ext2_fstat
     pxtime_t ctime;
 };
 
-err_t ext2_init( struct ext2_partition* dest, char* raw );
+err_t ext2_init( struct ext2_partition** dest, char* raw );
 void ext2_free( struct ext2_partition* p, bool freeRaw );
 char* ext2_get_raw( struct ext2_partition* p );
 
