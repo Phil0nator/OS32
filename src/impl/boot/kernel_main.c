@@ -17,6 +17,7 @@
 #include "stdlib/cpuid.h"
 #include "system/filesystems/linitrd.h"
 #include "tests/initrdext2.h"
+#include "drivers/fpu.h"
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -95,6 +96,12 @@ void _kernel_main()
     }
     vgaPrintf("%+ kmalloc setup\n");
 
+    if ( __install_fpu() == OS32_ERROR )
+    {
+        vgaPrintf("%- fpu\n");
+    }
+    vgaPrintf("%+ fpu\n");
+
     if ( __install_initrd() == OS32_ERROR )
     {
         vgaPrintf("%- initrd\n");
@@ -108,7 +115,6 @@ void _kernel_main()
     // tss_enter_usermode( testfn );
 
     __initrdext2_test();
-
 
     // enter desktop mode:
     vgaPrintf("%+ Entering desktop mode...\n");
