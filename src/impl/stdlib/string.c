@@ -72,5 +72,5 @@ size_t strchr( const char* str, char chr )
 bool strequ( const char* a, const char* b )
 {
     for (;*a==*b;a++,b++);
-    return *a==*b;
+    return *--a==*--b;
 }

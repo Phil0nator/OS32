@@ -251,7 +251,7 @@ typedef struct ext2_partition
         ext2_superblock_extended_t* extended_superblock;
     };
 
-    ext2_block_group_descriptor_t* bgd;
+    ext2_block_group_descriptor_t* bgdt;
     ext2_inode_t* root;
 
     size_t block_size;
@@ -265,7 +265,14 @@ typedef struct ext2_partition
 
 ext2_inode_t* ext2_get_inode( struct ext2_partition* src, size_t index )
 {
-    return (ext2_inode_t*)(src->raw_data + src->bgd->inodes_start*src->block_size + index*src->inode_size);
+    size_t group = (index-1) / src->base_superbock->in_grp;
+    
+    size_t grouped_idx = (index-1) % src->base_superbock->in_grp;
+    
+    size_t block = ( grouped_idx * src->inode_size ) / src->block_size;
+    
+    char* table = src->raw_data + src->bgdt[ group ].inodes_start * src->block_size;
+    return (ext2_inode_t*)( src->raw_data + ( src->bgdt[group].inodes_start ) * src->block_size + ( (index-1) * src->inode_size ));
 }
 
 char* ext2_get_block( struct ext2_partition* src, uint32_t blockno )
@@ -337,15 +344,16 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path )
     if ( strequ( path, "/" ) ) return src->root;
     path++;
     char fname[256];
+    strcpy(fname, path);
 
     ext2_inode_t* cur_dir = src->root;
     
     while (true)
     {
         uint32_t next_slash = strchr(path, '/');
-        bzero(fname, sizeof(fname));
         if (next_slash != -1)
         {
+            bzero(fname, sizeof(fname));
             memcpy( fname, path, next_slash );
             path+=next_slash+1;
         }
@@ -364,7 +372,7 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
 {
     *_dest = kmalloc( sizeof(struct ext2_partition) );
     struct ext2_partition* dest = *_dest;
-    bzero(dest, sizeof(struct ext2_partition));
+    bzero(*_dest, sizeof(struct ext2_partition));
     dest->raw_data = raw;
     dest->base_superbock = raw + 1024;
     if (dest->base_superbock->sig != EXT2_SIGNATURE)
@@ -374,7 +382,7 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
     }
     dest->block_size = 1024 << dest->base_superbock->bl_size;
     dest->frag_size = 1024 << dest->base_superbock->bl_size ;
-    dest->bgd = raw + 1024 + 1024;
+    dest->bgdt = raw + dest->block_size;
     if (dest->base_superbock->ver_maj >= 1)
     {
         dest->inode_size = dest->extended_superblock->inode_s;
@@ -384,7 +392,7 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
         dest->inode_size = 128;
     }
     dest->root = ext2_get_inode( dest, EXT2_ROOT_INODE );
-
+    return OS32_SUCCESS;
 }
 void ext2_free( struct ext2_partition* p, bool freeRaw )
 {
@@ -400,7 +408,7 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
     }
     ext2_inode_t* in = ext2_getf( p, fname );
     if (in == OS32_FAILED) return OS32_ERROR;
-    fd_t fd = 0;
+    fd_t fd = 1;
     for (; fd < EXT2_MAX_OPEN; fd++)
     {
         if ( !p->relations[fd].inode )
@@ -414,7 +422,16 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
     
 }
 size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes );
-size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes );
+size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes, size_t start )
+{
+    if (fd <= 0 || p->relations[fd].inode == 0)
+    {
+        __set_errno( EBADF );
+        return OS32_ERROR;
+    }
+    ext2_inode_t* inode = p->relations[fd].inode;
+    return ext2_read_bytes( p, inode, dest, bytes, start );
+}
 size_t ext2_seekg(struct ext2_partition* p, fd_t fd, size_t amt, int whence );
 size_t ext2_tellg(struct ext2_partition* p, fd_t fd );
 size_t ext2_seeko(struct ext2_partition* p, fd_t fd, size_t amt, int whence );
