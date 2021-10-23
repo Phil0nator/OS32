@@ -6,4 +6,5 @@ void __initrdext2_test()
     fd_t fd = ext2_open( __initrd, "/test.txt" );
     ext2_read( __initrd, fd, buffer, 1024, 0 );
     vgaPuts( buffer );
+    ext2_close( __initrd, fd );
 }

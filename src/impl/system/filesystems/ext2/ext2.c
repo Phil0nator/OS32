@@ -338,7 +338,7 @@ uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* na
 }
 
 
-ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path )
+ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
 {
     if (path[0] != '/') return OS32_FAILED;
     if ( strequ( path, "/" ) ) return src->root;
@@ -364,6 +364,12 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path )
         }
         cur_dir = ext2_get_inode( src, next_inode );
         if (next_slash == -1) break;
+    }
+    if ( syml && (cur_dir->tp_perm | EXT2_TP_SYMLN))
+    {
+        bzero(fname, sizeof(fname));
+        ext2_read_bytes( src, cur_dir, fname, cur_dir->size_low, 0 );
+        return ext2_getf( src, fname, syml );
     }
     return cur_dir;
 }
@@ -406,7 +412,7 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
         __set_errno(EPERM);
         return OS32_ERROR;
     }
-    ext2_inode_t* in = ext2_getf( p, fname );
+    ext2_inode_t* in = ext2_getf( p, fname, true );
     if (in == OS32_FAILED) return OS32_ERROR;
     fd_t fd = 1;
     for (; fd < EXT2_MAX_OPEN; fd++)
@@ -421,7 +427,7 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
     return OS32_FAILED;
     
 }
-size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes );
+size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes, size_t start );
 size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes, size_t start )
 {
     if (fd <= 0 || p->relations[fd].inode == 0)
@@ -432,25 +438,59 @@ size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes, si
     ext2_inode_t* inode = p->relations[fd].inode;
     return ext2_read_bytes( p, inode, dest, bytes, start );
 }
-size_t ext2_seekg(struct ext2_partition* p, fd_t fd, size_t amt, int whence );
-size_t ext2_tellg(struct ext2_partition* p, fd_t fd );
-size_t ext2_seeko(struct ext2_partition* p, fd_t fd, size_t amt, int whence );
-size_t ext2_tello(struct ext2_partition* p, fd_t fd );
-err_t ext2_close(struct ext2_partition* p, fd_t fd );
+err_t ext2_close(struct ext2_partition* p, fd_t fd )
+{
+    if (fd <= 0 || p->relations[fd].inode <= 0)
+    {
+        __set_errno( EBADF );
+        return OS32_ERROR;
+    }
+    p->relations[fd].inode = 0;
+}
 
-
+void ext2_stat_inodecpy( ext2_inode_t* inode, struct ext2_fstat* buf )
+{
+    buf->atime = inode->la_time;
+    buf->ctime = inode->create_time;
+    buf->gid = inode->gid;
+    buf->mtime = inode->lm_time;
+    buf->uid = inode->uid;
+    buf->size = inode->size_low;
+    buf->nlink = inode->hardln_count;
+}
 
 err_t ext2_stat(struct ext2_partition* p, const char* path, struct ext2_fstat* buf)
 {
-
+    fd_t fd;
+    if ( (fd = ext2_open( p, path )) == OS32_ERROR)
+    {
+        return OS32_ERROR;
+    }
+    err_t out = ext2_fstat( p, fd, buf );
+    ext2_close(p, fd);
+    return out;
 }
 err_t ext2_fstat(struct ext2_partition* p, fd_t fd, struct ext2_fstat* buf)
 {
-
+    if (fd <= 0 || p->relations[fd].inode <= 0)
+    {
+        __set_errno(EBADF);
+        return OS32_ERROR;
+    }
+    ext2_inode_t* inode = p->relations[fd].inode;
+    ext2_stat_inodecpy( inode, buf );
+    return OS32_SUCCESS; 
 }
 err_t ext2_lstat(struct ext2_partition* p, const char* path, struct ext2_fstat* buf)
 {
-
+    if (p->base_superbock->sig != EXT2_SIGNATURE)
+    {
+        __set_errno(EPERM);
+        return OS32_ERROR;
+    }
+    ext2_inode_t* in = ext2_getf( p, path, false );
+    if (in == OS32_FAILED) return OS32_ERROR;
+    ext2_stat_inodecpy( in, buf );
 }
 
 #pragma pack(0)

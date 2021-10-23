@@ -18,6 +18,7 @@
 #include "system/filesystems/linitrd.h"
 #include "tests/initrdext2.h"
 #include "drivers/fpu.h"
+#include "system/filesystems/vfs.h"
 
 #define __kernel_main_hlt while(1);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -107,6 +108,12 @@ void _kernel_main()
         vgaPrintf("%- initrd\n");
     }
     vgaPrintf("%+ initrd\n");
+
+    if ( __install_vfs() == OS32_ERROR )
+    {
+        vgaPrintf("%- vfs\n");
+    }
+    vgaPrintf("%+ vfs\n");
     
     idt_update();
 

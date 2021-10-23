@@ -71,6 +71,28 @@ size_t strchr( const char* str, char chr )
 }
 bool strequ( const char* a, const char* b )
 {
-    for (;*a==*b;a++,b++);
-    return *--a==*--b;
+    while (true)
+    {
+        if (*a != *b)
+        {
+            return false;
+        }
+        a++;
+        b++;
+        if (*a == *b && *a == 0) break;
+    }
+    return true;
+}
+bool starts_with( const char* a, const char* b )
+{
+    while (*b)
+    {
+        if (*a != *b)
+        {
+            return false;
+        }
+        a++;
+        b++;
+    }
+    return true;
 }

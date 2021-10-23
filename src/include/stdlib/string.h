@@ -18,5 +18,6 @@ size_t strlen( const char* data );
 size_t strchr( const char* str, char chr );
 bool strequ( const char* a, const char* b );
 const char* strerror( errno_t e );
+bool starts_with( const char* a, const char* b );
 
 #endif
