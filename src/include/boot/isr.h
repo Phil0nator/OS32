@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "stdlib/error.h"
 
+// Perform ISR installation
 err_t __install_isr();
 
 #endif

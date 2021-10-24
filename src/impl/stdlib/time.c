@@ -37,5 +37,6 @@ pxtime_t time(pxtime_t* dest)
     secs+=ct.m_mday*24*60*60;
     secs+=days_before_month( ct.m_month )*24*60*60;
     secs+=ct.m_year*365*24*60*60 + (ct.m_year/4)*24*60*60;
+    if (dest) *dest = secs;
     return secs;
 }

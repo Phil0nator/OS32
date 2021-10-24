@@ -82,7 +82,9 @@ typedef struct cpuid_features
 } cpuid_features_t;
 #pragma pack(0)
 
-
+/**
+ * Call CPUID, and load the values into the given struct
+ */
 void cpuid_get_features( struct cpuid_features* dest );
 
 #endif

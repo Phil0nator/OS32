@@ -35,7 +35,16 @@ typedef struct tss_struct
 } tss_t;
 #pragma pack(0)
 
+/**
+ * Perform tss installation
+ * ( depends on gdt )
+ */
 err_t __install_tss();
+
+/**
+ * Enter usermode on a given entrypoint
+ * 
+ */
 void tss_enter_usermode( void* entrpoint );
 
 

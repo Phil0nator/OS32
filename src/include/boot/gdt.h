@@ -3,8 +3,14 @@
 #include <stdint.h>
 #include "stdlib/error.h"
 
+/**
+ * Perform gdt installation
+ */
 err_t __install_gdt();
 
+/**
+ * Set a gate of the gdt
+ */
 err_t gdt_set_gate( 
     int32_t number, 
     unsigned long base, 
@@ -13,6 +19,9 @@ err_t gdt_set_gate(
     uint8_t granularity 
 );
 
+/**
+ * Flush the gdt (update everything)
+ */
 extern void gdt_flush();
 
 

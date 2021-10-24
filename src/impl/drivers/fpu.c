@@ -1,7 +1,6 @@
 #include "drivers/fpu.h"
 #include "stdlib/cpuid.h"
 #include "drivers/cr0.h"
-static bool fpu_is_installed = false;
 
 err_t __install_fpu()
 {
@@ -19,6 +18,7 @@ err_t __install_fpu()
         return OS32_ERROR;
     }
     fpu_reset();
+    return OS32_SUCCESS;
 }
 
 bool fpu_installed()
@@ -29,4 +29,5 @@ bool fpu_installed()
 err_t fpu_reset()
 {
     __asm__ __volatile__ ("FNINIT");
+    return OS32_SUCCESS;
 }

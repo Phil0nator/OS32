@@ -20,11 +20,23 @@
 typedef size_t pit_ticks_t;
 typedef float pit_secs_t;
 
-
+/**
+ * Perform timer installation
+ */
 err_t __install_timer();
 
+/**
+ * Wait a certain number of ticks
+ */
 void pit_waitt( pit_ticks_t ticks );
+/**
+ * Wait a certain number of seconds
+ */
 void pit_waits( pit_secs_t seconds );
+
+/**
+ * Get the current tick count
+ */
 pit_ticks_t pit_ticks();
 
 #endif

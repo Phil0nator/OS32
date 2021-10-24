@@ -3,6 +3,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+
+// VGA Color codes:
 #define VGA_BLACK           (0)
 #define VGA_BLUE            (1)
 #define VGA_GREEN           (2)
@@ -20,16 +22,21 @@
 #define VGA_YELLOW          (14)
 #define VGA_WHITE           (15)
 
+// Special character definitions:
 #define VGA_NEWLINE         ('\n')
 #define VGA_CARRIAGE        ('\r')
+
+// Dimentions
 #define VGA_WIDTH           (80)
 #define VGA_HEIGHT          (25)
 
+// VGA Color
 typedef uint8_t vgac_t;
+// VGA output buffer ( should write-only )
 extern struct VGACell* VGAO;
 
 #pragma pack(1)
-
+// One cell of the output buffer
 typedef struct VGACell
 {
     char c;

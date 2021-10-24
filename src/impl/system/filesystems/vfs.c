@@ -101,24 +101,26 @@ typedef struct fstp_methods
 static const fstp_methods_t fs_methods[VFS_FS_TYPES] =
 {
     {
-        ext2_open,
-        ext2_read,
-        ext2_write,
-        ext2_close,
-        ext2_stat,
-        ext2_fstat,
-        ext2_lstat
+        (fstp_m_open)ext2_open,
+        (fstp_m_read)ext2_read,
+        (fstp_m_write)ext2_write,
+        (fstp_m_close)ext2_close,
+        (fstp_m_stat)ext2_stat,
+        (fstp_m_fstat)ext2_fstat,
+        (fstp_m_lstat)ext2_lstat
     }
 };
 
+// File Descriptor Table
 static fd_entry_t fdt[VFS_MAX_OPEN];
+// Virtual File System Partition Descriptor Table
 static vfs_partition_t vfspdt[VFS_MAX_MEDIA];
 
 
 size_t vfs_read_file( fd_t fd, char* dest, size_t bytes );
 size_t vfs_write_file( fd_t fd, const char* src, size_t bytes );
 
-
+// Get the next available descriptor 
 fd_t alloc_next_fd()
 {
     for (fd_t i = 3; i < VFS_MAX_OPEN; i++)
@@ -131,7 +133,7 @@ fd_t alloc_next_fd()
     }
     return OS32_ERROR;
 }
-
+// Allocate a new partition descriptor
 err_t alloc_mount_partition( fd_type fdtp, fs_type t, void* u, char* m )
 {
     for (size_t i = 0; i < VFS_MAX_MEDIA; i++)
@@ -140,6 +142,7 @@ err_t alloc_mount_partition( fd_type fdtp, fs_type t, void* u, char* m )
         {
             vfspdt[i].present = true;
             vfspdt[i].fstp = t;
+            vfspdt[i].fdtp = fdtp;
             vfspdt[i].underlying = u;
             strcpy( vfspdt[i].mountpoint, m );
             return i;
@@ -151,6 +154,7 @@ err_t alloc_mount_partition( fd_type fdtp, fs_type t, void* u, char* m )
 
 err_t __install_vfs()
 {
+    // mount the initrd
     alloc_mount_partition(FD_FILE, FD_EXT2, __initrd, "/initrd" );
     return OS32_SUCCESS;
 }
@@ -158,20 +162,31 @@ err_t __install_vfs()
 
 fd_t vfs_open( const char* fpath, int mode )
 {
+    // Search through all mounted partitions
     for (size_t i = 0; i < VFS_MAX_MEDIA; i++ )
     {
+        // check if this path goes to this mounted partition
         if ( starts_with( fpath, vfspdt[i].mountpoint) )
         {
+            // fspath is the path without the partition part.
+            // i.e: /initrd/bin/bash
+            //      - fspath would = "/bin/bash"
             const char* fspath = fpath + strlen(vfspdt[i].mountpoint) -1;
+            // Use the correct open() method for the given fs
             fd_t underlying = fs_methods[vfspdt[i].fstp].m_open
             (
                 vfspdt[i].underlying,
                 fspath
             );
+            // get the next available fd
             fd_t vfsfd = alloc_next_fd();
+            // Load the appropriate properties into the table
             fdt[vfsfd].fdtp = vfspdt[i].fdtp;
             fdt[vfsfd].pos = (fd_pos_t){ 0, 0 };
             fdt[vfsfd].present = true;
+
+            // Depending on the type of fd,
+            // Load the rest of the properties into the table
             switch (fdt[vfsfd].fdtp)
             {
             case FD_FILE:
@@ -186,6 +201,8 @@ fd_t vfs_open( const char* fpath, int mode )
             return vfsfd;
         }
     }
+
+    // File not found
     __set_errno( ENOENT );
     return OS32_ERROR;
 }
@@ -194,14 +211,17 @@ size_t vfs_write( fd_t fd, const char* data, size_t bytes );
 
 size_t vfs_read( fd_t fd, char* dest, size_t bytes )
 {
+    // Check for valid fd
     VFS_ASSERT_FD(fd)
-    if (fdt[fd].fdtp == FD_EXT2)
+    // depending on fd type, do an action
+    if (fdt[fd].fdtp == FD_FILE)
     {
         return vfs_read_file( fd, dest, bytes );
     }
 }
 size_t vfs_seekg( fd_t fd, size_t amt, int whence )
 {
+    // chck for valid fd
     VFS_ASSERT_FD(fd)
     switch (whence)
     {
@@ -226,11 +246,13 @@ size_t vfs_seekg( fd_t fd, size_t amt, int whence )
 }
 size_t vfs_tellg( fd_t fd )
 {
+    // check valid descriptor
     VFS_ASSERT_FD(fd)
     return fdt[fd].pos.ipos;
 }
 size_t vfs_seeko( fd_t fd, size_t amt, int whence )
 {
+    // check valid descriptor
     VFS_ASSERT_FD(fd)
     switch (whence)
     {
@@ -255,6 +277,7 @@ size_t vfs_seeko( fd_t fd, size_t amt, int whence )
 }
 size_t vfs_tello( fd_t fd )
 {
+    // check valid descriptor
     VFS_ASSERT_FD(fd)
     return fdt[fd].pos.opos;
 }
@@ -263,6 +286,7 @@ size_t vfs_tello( fd_t fd )
 
 err_t vfs_close( fd_t fd )
 {
+    // check valid descriptor
     VFS_ASSERT_FD(fd)
     if (fdt[fd].fdtp == FD_FILE)
     {
@@ -271,6 +295,7 @@ err_t vfs_close( fd_t fd )
     fdt[fd].present = false;
 }
 
+// Copy the data from an ext2fstat struct to a general fstat struct
 void vfs_ext2stat_cpy( struct fstat* dest, const struct ext2_fstat* src )
 {
     dest->atime = src->atime;
@@ -291,6 +316,7 @@ err_t vfs_stat(const char* path, struct fstat* buf)
 }
 err_t vfs_fstat(fd_t fd, struct fstat* buf)
 {
+    // check valid descriptor
     VFS_ASSERT_FD(fd)
 
     switch ( fdt[fd].fdtp )
@@ -321,7 +347,7 @@ err_t vfs_lstat(const char* path, struct fstat* buf)
 
 err_t vfs_close_file( fd_t fd )
 {
-    fstp_methods_t* m = &fs_methods[ fdt[fd].file.fstp ];
+    const fstp_methods_t* m = &fs_methods[ fdt[fd].file.fstp ];
     return m->m_close
     ( 
         vfspdt[ fdt[fd].file.partition_mount ].underlying, 
@@ -344,7 +370,7 @@ size_t vfs_read_file( fd_t fd, char* dest, size_t bytes )
 
 size_t vfs_write_file( fd_t fd, const char* src, size_t bytes )
 {
-    fstp_methods_t* m = &fs_methods[ fdt[fd].file.fstp ];
+    const fstp_methods_t* m = &fs_methods[ fdt[fd].file.fstp ];
     return m->m_write
     ( 
         vfspdt[ fdt[fd].file.partition_mount ].underlying, 

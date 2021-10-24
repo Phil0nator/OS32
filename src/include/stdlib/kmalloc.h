@@ -5,9 +5,12 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// A pointer returned by kmalloc and friends
 typedef void* kmalloc_ptr;
 
-
+/**
+ * Perform kmalloc setup and installation
+ */
 err_t __install_kmalloc();
 
 /**

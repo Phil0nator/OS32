@@ -3,6 +3,10 @@
 #include <stdint.h>
 #include "stdlib/error.h"
 
+/**
+ * rtc_timepoint represents a point in time as given
+ * by the real time clock on the CPU.
+ */
 typedef struct rtc_timepoint
 {
     uint8_t m_sec;
@@ -15,9 +19,16 @@ typedef struct rtc_timepoint
     uint8_t m_cent;
 } rtc_timepoint_t;
 
+// The names of the months indexed in order
 extern const char* rtc_month_names[12];
 
+/**
+ * Write the current rtc time into a timepoint struct
+ */
 err_t rtc_get_time( struct rtc_timepoint* dest );
+/**
+ * Set the RTC's internal time with a timepoint struct
+ */
 err_t rtc_set_time( const struct rtc_timepoint* src );
 
 #endif

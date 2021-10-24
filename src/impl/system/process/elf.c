@@ -25,7 +25,7 @@ err_t elf_check_validity( Elf32_Ehdr* h )
 
 elf_fn elf_load_for_exec( elfdat_t elf )
 {
-    Elf32_Ehdr* header_check = elf;
+    Elf32_Ehdr* header_check = (Elf32_Ehdr*) elf;
     if (elf_check_validity( header_check ) != OS32_SUCCESS)
     {
         return OS32_FAILED;
@@ -33,7 +33,7 @@ elf_fn elf_load_for_exec( elfdat_t elf )
 }
 elf_fn elf_get_sym( elfdat_t elf, const char* symbol )
 {
-    Elf32_Ehdr* header_check = elf;
+    Elf32_Ehdr* header_check =(Elf32_Ehdr*) elf;
     if (elf_check_validity( header_check ) != OS32_SUCCESS)
     {
         return OS32_FAILED;
@@ -41,5 +41,9 @@ elf_fn elf_get_sym( elfdat_t elf, const char* symbol )
 }
 err_t elf_unload_from_exec( elfdat_t elf )
 {
-
+    Elf32_Ehdr* header_check =(Elf32_Ehdr*) elf;
+    if (elf_check_validity( header_check ) != OS32_SUCCESS)
+    {
+        return OS32_FAILED;
+    }
 }

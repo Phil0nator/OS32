@@ -5,7 +5,9 @@
 #include "ext2/ext2.h"
 
 extern struct ext2_partition* __initrd;
-
+/**
+ * Perform initrd installation
+ */
 err_t __install_initrd();
 
 

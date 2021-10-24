@@ -253,6 +253,7 @@ void vgaGetCursor( int* x, int* y )
     *x = cursor.x;
     *y = cursor.y;
 }
+// TODO:
 void vgaShowCursor( bool show )
 {
     

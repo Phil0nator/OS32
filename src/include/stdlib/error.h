@@ -2,17 +2,24 @@
 #define OS32_ERR_H
 
 typedef int err_t;
-typedef int errno_t;
+typedef unsigned errno_t;
 
+// Error encountered in function returning integral type
 #define OS32_ERROR      ((err_t)-1)
+// Error encountered in function returning pointer type
 #define OS32_FAILED     ((void*)0)
+// Success in function returning err_t / integral type 
 #define OS32_SUCCESS    (0)
 
+// Get the last error code (should use errno macro)
 errno_t __get_errno();
+// Set the current error code
 void __set_errno( errno_t e );
 
+// TODO:
 void kpanic( const char* preface );
 
+// Get the last error code
 #define errno (__get_errno())
 
 // http://www.virtsync.com/c-error-codes-include-errno

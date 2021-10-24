@@ -3,11 +3,15 @@
 #include <stdint.h>
 #include <stddef.h>
 
+// size of 1 4K page
 #define PAGE_SIZE (4096)
+// size of 1 4M page
 #define HUGE_PAGE_SIZE (0x100000)
+
 #define PAGE_INTIZE( ent ) (*(uint32_t*)(&ent))
 #define PAGE_SET_ADDR(ent, addr)(PAGE_INTIZE(ent) = (addr))
 #define PAGE_SET_BIT( ent, bit, val ) (PAGE_INTIZE(ent) = (val) ? (PAGE_INTIZE(ent)|(1<<bit)) : (PAGE_INTIZE(ent)&~(1<<bit)) )
+
 
 #define PAGE_PRESENT    0
 #define PAGE_RW         1
@@ -55,12 +59,20 @@ typedef struct page_dir
 
 extern page_dir_t boot_page_directory;
 
+// Convert a valid virtual address to a physical address
 phys_addr phys_addr_of( const void* virtual_addr );
+
+// Wire a physical and virtual page with the given permissions
 void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags );
+
+// DEPRICATED
 const void* next_virt();
 
+// Set the value held by the cr3 register
 void set_cr3( phys_addr a );
+// Get the value held by the cr3 register
 phys_addr get_cr3();
+// flush paging system (update)
 extern void __invlpg_flush();
 
 #endif

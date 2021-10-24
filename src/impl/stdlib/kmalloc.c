@@ -188,6 +188,7 @@ void kmalloc_merge( struct kmalloc_header* h )
     kmalloc_push(h);
 }
 
+// TODO: Alignment
 struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
 {
     struct kmalloc_header* ptr = kmalloc_heap_first;

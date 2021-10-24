@@ -270,9 +270,9 @@ ext2_inode_t* ext2_get_inode( struct ext2_partition* src, size_t index )
     // find the block in which the inode resides
     size_t grouped_idx = (index-1) % src->base_superbock->in_grp;
     // find the block index in which the inode resides
-    size_t block = ( grouped_idx * src->inode_size ) / src->block_size;
+    // size_t block = ( grouped_idx * src->inode_size ) / src->block_size;
     // find the inode table in which the inode resisdes
-    char* table = src->raw_data + src->bgdt[ group ].inodes_start * src->block_size;
+    // char* table = src->raw_data + src->bgdt[ group ].inodes_start * src->block_size;
     // inode address = (data start) + ( inode table ) + ( index )
     return (ext2_inode_t*)( src->raw_data + ( src->bgdt[group].inodes_start ) * src->block_size + ( (index-1) * src->inode_size ));
 }
@@ -392,7 +392,7 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
         // find the next slash in the path
         uint32_t next_slash = strchr(path, '/');
         // If there is another slash in the path,
-        if (next_slash != -1)
+        if (next_slash != -1ull)
         {
             // copy this piece of path and advance
             // ie. /home/beans/Documents
@@ -416,7 +416,7 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
         }
         // Find the inode number for this component of the path
         uint32_t next_inode = 0;
-        if ( (next_inode = ext2_find_in_dir( src, cur_dir, fname )) == OS32_ERROR )
+        if ( (next_inode = ext2_find_in_dir( src, cur_dir, fname )) == (size_t)OS32_ERROR )
         {
             // If the entry could not be found, the file/dir doesn't exist
             return OS32_FAILED;
@@ -424,7 +424,7 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
         // update the current directory with the inode number
         cur_dir = ext2_get_inode( src, next_inode );
         // If at the end of the path, break the loop
-        if (next_slash == -1) break;
+        if (next_slash == -1ull) break;
     }
     // For symbolic links:
     // TODO: fix so it doesn't always run
@@ -449,11 +449,11 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
     // ease of access
     struct ext2_partition* dest = *_dest;
     // zero out the partition
-    bzero(*_dest, sizeof(struct ext2_partition));
+    bzero((char*)*_dest, sizeof(struct ext2_partition));
     // load in the raw pointer
     dest->raw_data = raw;
     // identify superblock
-    dest->base_superbock = raw + 1024;
+    dest->base_superbock = (ext2_base_superblock_t*) raw + 1024;
     // ensure that this is a valid ext2 partition
     if (dest->base_superbock->sig != EXT2_SIGNATURE)
     {
@@ -464,7 +464,7 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
     dest->block_size = 1024 << dest->base_superbock->bl_size;
     dest->frag_size = 1024 << dest->base_superbock->bl_size;
     // locate the block group descriptor table
-    dest->bgdt = raw + dest->block_size;
+    dest->bgdt = (ext2_block_group_descriptor_t*) raw + dest->block_size;
     // depending on the version of this ext2 partition,
     // different values will be used.
     if (dest->base_superbock->ver_maj >= 1)
@@ -514,7 +514,7 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
 
     // Too many open files, no empty entry could be found
     __set_errno(EMFILE);
-    return OS32_FAILED;
+    return OS32_ERROR;
     
 }
 size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes, size_t start )
@@ -536,7 +536,7 @@ size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes, si
 err_t ext2_close(struct ext2_partition* p, fd_t fd )
 {
     // check for valid fd
-    if (fd <= 0 || p->relations[fd].inode <= 0)
+    if (fd <= 0 || p->relations[fd].inode == 0)
     {
         __set_errno( EBADF );
         return OS32_ERROR;
@@ -574,7 +574,7 @@ err_t ext2_stat(struct ext2_partition* p, const char* path, struct ext2_fstat* b
 err_t ext2_fstat(struct ext2_partition* p, fd_t fd, struct ext2_fstat* buf)
 {
     // check for valid fd
-    if (fd <= 0 || p->relations[fd].inode <= 0)
+    if (fd <= 0 || p->relations[fd].inode == 0)
     {
         __set_errno(EBADF);
         return OS32_ERROR;
