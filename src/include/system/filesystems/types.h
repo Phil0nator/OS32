@@ -7,6 +7,8 @@
 
 typedef int fd_t;
 typedef int dev_t;
+typedef int uid_t;
+typedef int gid_t;
 
 struct fstat
 {
@@ -14,8 +16,8 @@ struct fstat
     uint32_t inode;
     uint32_t mode;
     uint32_t nlink;
-    ext2_uid uid;
-    ext2_gid gid;
+    uid_t uid;
+    gid_t gid;
     size_t size;
     pxtime_t atime;
     pxtime_t mtime;

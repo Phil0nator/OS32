@@ -13,6 +13,8 @@ typedef int fd_type;
 typedef int fs_type;
 #define FD_EXT2 0
 
+#define VFS_FS_TYPES (1)
+
 typedef struct fd_pos
 {
     size_t ipos;
@@ -40,6 +42,7 @@ typedef struct vfs_partition
 {
     bool present;
     fs_type fstp;
+    fd_type fdtp;
     void* underlying;
     char mountpoint[VFS_MAX_PATH]; 
 } vfs_partition_t;
@@ -65,7 +68,7 @@ typedef struct fstp_methods
     const fstp_m_lstat m_lstat;
 } fstp_methods_t;
 
-static const fstp_methods_t fs_methods[1] =
+static const fstp_methods_t fs_methods[VFS_FS_TYPES] =
 {
     {
         ext2_open,
@@ -81,6 +84,11 @@ static const fstp_methods_t fs_methods[1] =
 static fd_entry_t fdt[VFS_MAX_OPEN];
 static vfs_partition_t vfspdt[VFS_MAX_MEDIA];
 
+
+size_t vfs_read_file( fd_t fd, char* dest, size_t bytes );
+size_t vfs_write_file( fd_t fd, const char* src, size_t bytes );
+
+
 fd_t alloc_next_fd()
 {
     for (fd_t i = 3; i < VFS_MAX_OPEN; i++)
@@ -94,7 +102,7 @@ fd_t alloc_next_fd()
     return OS32_ERROR;
 }
 
-err_t alloc_mount_partition( fs_type t, void* u, char* m )
+err_t alloc_mount_partition( fd_type fdtp, fs_type t, void* u, char* m )
 {
     for (size_t i = 0; i < VFS_MAX_MEDIA; i++)
     {
@@ -113,14 +121,43 @@ err_t alloc_mount_partition( fs_type t, void* u, char* m )
 
 err_t __install_vfs()
 {
-    alloc_mount_partition( FD_EXT2, __initrd, "/initrd" );
+    alloc_mount_partition(FD_FILE, FD_EXT2, __initrd, "/initrd" );
     return OS32_SUCCESS;
 }
 
 
 fd_t vfs_open( const char* fpath, int mode )
 {
-
+    for (size_t i = 0; i < VFS_MAX_MEDIA; i++ )
+    {
+        if ( starts_with( fpath, vfspdt[i].mountpoint) )
+        {
+            const char* fspath = fpath + strlen(vfspdt[i].mountpoint) -1;
+            fd_t underlying = fs_methods[vfspdt[i].fstp].m_open
+            (
+                vfspdt[i].underlying,
+                fspath
+            );
+            fd_t vfsfd = alloc_next_fd();
+            fdt[vfsfd].fdtp = vfspdt[i].fdtp;
+            fdt[vfsfd].pos = (fd_pos_t){ 0, 0 };
+            fdt[vfsfd].present = true;
+            switch (fdt[vfsfd].fdtp)
+            {
+            case FD_FILE:
+                fdt[vfsfd].file.fstp = vfspdt[i].fstp;
+                fdt[vfsfd].file.partition_mount = i;
+                fdt[vfsfd].file.underlying_fd = underlying;
+                break;
+            
+            default:
+                break;
+            }
+            return vfsfd;
+        }
+    }
+    __set_errno( ENOENT );
+    return OS32_ERROR;
 }
 size_t vfs_write( fd_t fd, const char* data, size_t bytes );
 
@@ -128,7 +165,10 @@ size_t vfs_write( fd_t fd, const char* data, size_t bytes );
 size_t vfs_read( fd_t fd, char* dest, size_t bytes )
 {
     VFS_ASSERT_FD(fd)
-
+    if (fdt[fd].fdtp == FD_EXT2)
+    {
+        return vfs_read_file( fd, dest, bytes );
+    }
 }
 size_t vfs_seekg( fd_t fd, size_t amt, int whence )
 {
@@ -198,6 +238,55 @@ err_t vfs_close( fd_t fd )
     {
         vfs_close_file(fd);
     }
+    fdt[fd].present = false;
+}
+
+void vfs_ext2stat_cpy( struct fstat* dest, const struct ext2_fstat* src )
+{
+    dest->atime = src->atime;
+    dest->ctime = src->ctime;
+    dest->dev = src->dev;
+    dest->gid = src->gid;
+    dest->inode = src->inode;
+    dest->mode = src->mode;
+    dest->mtime = src->mtime;
+    dest->nlink = src->nlink;
+    dest->size = src->size;
+    dest->uid = src->uid;
+}
+
+err_t vfs_stat(const char* path, struct fstat* buf)
+{
+
+}
+err_t vfs_fstat(fd_t fd, struct fstat* buf)
+{
+    VFS_ASSERT_FD(fd)
+
+    switch ( fdt[fd].fdtp )
+    {
+    case FD_FILE:
+        {    
+            struct ext2_fstat ext2fstat;
+            fs_methods[ fdt[fd].fdtp ].m_fstat
+            (
+                vfspdt[ fdt[fd].file.partition_mount ].underlying,
+                fdt[fd].file.underlying_fd,
+                &ext2fstat
+            );
+            vfs_ext2stat_cpy( buf, &ext2fstat );
+        }
+        break;
+    
+    default:
+        __set_errno( EBADF );
+        return OS32_ERROR;
+        break;
+    }
+}
+err_t vfs_lstat(const char* path, struct fstat* buf)
+{
+
 }
 
 err_t vfs_close_file( fd_t fd )
@@ -212,7 +301,7 @@ err_t vfs_close_file( fd_t fd )
 
 size_t vfs_read_file( fd_t fd, char* dest, size_t bytes )
 {
-    fstp_methods_t* m = &fs_methods[ fdt[fd].file.fstp ];
+    const fstp_methods_t* m = &fs_methods[ fdt[fd].file.fstp ];
     return m->m_read
     ( 
         vfspdt[ fdt[fd].file.partition_mount ].underlying, 
@@ -235,3 +324,4 @@ size_t vfs_write_file( fd_t fd, const char* src, size_t bytes )
         fdt[fd].pos.opos
     );
 }
+

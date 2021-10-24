@@ -1,6 +1,7 @@
 #include "stdlib/string.h"
 static const char* err_names[] = 
 {
+"Success",
 "Operation not permitted",
 "No such file or directory",
 "No such process",

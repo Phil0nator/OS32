@@ -357,6 +357,11 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
             memcpy( fname, path, next_slash );
             path+=next_slash+1;
         }
+        else
+        {
+            bzero(fname, sizeof(fname));
+            strcpy(fname, path);
+        }
         uint32_t next_inode = 0;
         if ( (next_inode = ext2_find_in_dir( src, cur_dir, fname )) == OS32_ERROR )
         {
@@ -365,7 +370,7 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
         cur_dir = ext2_get_inode( src, next_inode );
         if (next_slash == -1) break;
     }
-    if ( syml && (cur_dir->tp_perm | EXT2_TP_SYMLN))
+    if ( false && syml && (cur_dir->tp_perm & EXT2_TP_SYMLN))
     {
         bzero(fname, sizeof(fname));
         ext2_read_bytes( src, cur_dir, fname, cur_dir->size_low, 0 );
@@ -427,7 +432,10 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
     return OS32_FAILED;
     
 }
-size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes, size_t start );
+size_t ext2_write(struct ext2_partition* p, fd_t fd, const char* data, size_t bytes, size_t start )
+{
+
+}
 size_t ext2_read(struct ext2_partition* p, fd_t fd, char* dest, size_t bytes, size_t start )
 {
     if (fd <= 0 || p->relations[fd].inode == 0)

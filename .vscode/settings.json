@@ -12,6 +12,7 @@
         "format.h": "c",
         "limits": "cpp",
         "*.tcc": "cpp",
-        "type_traits": "cpp"
+        "type_traits": "cpp",
+        "elf.h": "c"
     }
 }
