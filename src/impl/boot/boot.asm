@@ -22,6 +22,7 @@ stack_top:
 section .data
 align 4096
 global boot_page_directory
+; Hardcoded id-mapped page tables
 boot_page_directory:
 dd 0x00000083
 dd 0x00400083
@@ -42,6 +43,7 @@ extern _kernel_main
 extern __multiboot_info_temporary
 global _boot
 _boot:
+    ; load page directory to cr3
     mov ecx, boot_page_directory - ADDROFF
     mov cr3, ecx
 
@@ -52,21 +54,27 @@ _boot:
     mov ecx, cr0
     or ecx, 0x80000000
     mov cr0, ecx
+
+    ; jump to higher half
     lea ecx, [_boot_paged]
     jmp ecx
 
 section .text
 _boot_paged:
-
+    ; remove id-map of nullptr
     mov dword[boot_page_directory], 0
 
+    ; add offset to temporary multiboot pointer
+    ; so that it can be accessed from a higher-half paged context
     add ebx, ADDROFF
     mov [__multiboot_info_temporary], ebx
 
+    ; move to C code
+    ; see kernel_main.c
     mov esp, stack_top
     call _kernel_main
 
-
+    ; This should never be reached
     cli
     hlt
     jmp $

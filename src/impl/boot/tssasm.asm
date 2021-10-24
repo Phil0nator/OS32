@@ -9,6 +9,7 @@ __ltr:
     push ebp
     mov ebp, esp
     mov ax, [ebp+8]
+    ; set the task register to the given tss
     ltr ax
     leave
     ret

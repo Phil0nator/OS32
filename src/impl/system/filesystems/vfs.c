@@ -15,38 +15,68 @@ typedef int fs_type;
 
 #define VFS_FS_TYPES (1)
 
+/**
+ * fd_pos represents a file descriptors cursor in a file.
+ * i.e its input reading position and output writing position.
+ * ( modifiable via seekg/seeko )
+ */
 typedef struct fd_pos
 {
     size_t ipos;
     size_t opos;
 } fd_pos_t;
-
+/**
+ * fd_entry represents an entry in the file descriptor table
+ */
 typedef struct fd_entry
 {
+    // Does this entry exist
     bool present;
+    // File descriptor type
     fd_type fdtp;
+    // Depending on the type of file descriptor,
+    // one of the following structs...
     union
     {
+        // for files,
         struct fd_file
         {
+            // filesystem type
             fs_type fstp;
+            // descriptor to the mounted partition
             fd_t partition_mount;
+            // descriptor provided by the underlying implimentation for that fs
             fd_t underlying_fd;
         } file;
     };
+    // cursor
     fd_pos_t pos;
     
 } fd_entry_t;
 
+/**
+ * vfs_partition represents a partition of any filesystem
+ * that has been loaded to the vfs
+ */
 typedef struct vfs_partition
 {
+    // does this entry exist
     bool present;
+    // filesystem type
     fs_type fstp;
+    // file descriptor type
     fd_type fdtp;
+    // void pointer to underlying implimentation struct
     void* underlying;
+    // path where this partition is mounted
     char mountpoint[VFS_MAX_PATH]; 
 } vfs_partition_t;
 
+/**
+ * fstp_methods, and its accompanying typedefs, represent
+ * the standard filesystem operation functions provided by
+ * any lower level implimentation of a filesystem.
+ */
 
 typedef fd_t (*fstp_m_open)( void* p, const char* f );
 typedef size_t (*fstp_m_read)( void* p, fd_t fd, char* dest, size_t bytes, size_t start );

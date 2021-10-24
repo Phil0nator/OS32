@@ -10,7 +10,10 @@ cpuid_get_features:
     push ebx
     push eax
     mov eax, 1
+    ; call cpuid
     cpuid
+    ; copy the values into the structure given from the
+    ; C code. See cpuid.h for the definition
     mov eax, [ebp+8]
     mov [eax], edx
     mov [eax+4], ecx

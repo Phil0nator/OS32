@@ -10,6 +10,7 @@ err_t __install_fpu()
 
     if(feat.fpu)
     {
+        // Disable emulation bit of cr0
         uint32_t cr0 = cr0_get();
         CR0_SET_BIT( cr0, CR0_EM, 0 ); 
         cr0_set( cr0 );
@@ -22,6 +23,7 @@ err_t __install_fpu()
 
 bool fpu_installed()
 {
+    // determine if the emulation bit is set in cr0
     return !CR0_GET_BIT( cr0_get(), CR0_EM );
 }
 err_t fpu_reset()

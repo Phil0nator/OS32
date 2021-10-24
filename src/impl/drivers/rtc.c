@@ -3,6 +3,7 @@
 #include "stdlib/string.h"
 #include <stdbool.h>
 
+// Register numbers to read from rtc
 #define RTC_SECREG     (0x00)
 #define RTC_MINREG     (0x02)
 #define RTC_HOURREG    (0x04)
@@ -32,17 +33,19 @@ const char* rtc_month_names[12] =
     "Dec"
 };
 
+// wait for the rtc to have a correct number
 static void await_rtc_ready()
 {
     while ( RTC_IN_PROGRESS(cmos_read( RTC_STATREGA )) );
 }
 
-
+// convert BCD to little endian
 static uint8_t bcd_to_bin( uint8_t bcd )
 {
     return ((bcd&0x0f))+((bcd>>4)*10);
 }
 
+// get the correct representation of a given field
 static uint8_t rtc_convert_field( uint8_t regb, uint8_t field )
 {
     if (RTC_FMT_BCD(regb))
@@ -51,7 +54,7 @@ static uint8_t rtc_convert_field( uint8_t regb, uint8_t field )
     }
     return field;
 } 
-
+// read from rtc into a structure
 static void populate_rtct( struct rtc_timepoint* dest )
 {
     dest->m_sec = cmos_read( RTC_SECREG );
@@ -72,7 +75,10 @@ err_t rtc_get_time( struct rtc_timepoint* dest )
         populate_rtct( &try_b );
     } while ( 0 );
 
+    // register b of the rtc determines the format of the numbers
     uint8_t regb = cmos_read( RTC_STATREGB );
+    // Use the format given in regb to convert all the fields to the correct 
+    // representation, and fill the structure
     dest->m_sec = rtc_convert_field( regb, try_a.m_sec );
     dest->m_min = rtc_convert_field( regb, try_a.m_min );
     dest->m_hour = rtc_convert_field( regb, try_a.m_hour );

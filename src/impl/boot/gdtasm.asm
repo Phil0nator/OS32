@@ -6,6 +6,7 @@ extern __gdt_ptr
 gdt_flush:
     lgdt [__gdt_ptr] ; load special pointer
     mov ax, 0x10     ; 0x10 is offset for GDT to data
+    ; update segment registers
     mov ds, ax
     mov es, ax
     mov fs, ax

@@ -29,6 +29,7 @@ void testfn()
 
 }
 
+// C entrypoint
 void _kernel_main()
 {
     vgaPrintf("%+ Entered Kernel Code\n");

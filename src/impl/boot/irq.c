@@ -80,7 +80,8 @@ static void irq_remap(void)
 err_t __install_irq()
 {
     irq_remap();
-
+    
+    // setup all the irq functions in the table
     idt_set_gate( 32, (size_t)__irq0, 0x08, 0x8E );
     idt_set_gate( 33, (size_t)__irq1, 0x08, 0x8E );
     idt_set_gate( 34, (size_t)__irq2, 0x08, 0x8E );

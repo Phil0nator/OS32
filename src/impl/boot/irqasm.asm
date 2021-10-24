@@ -1,6 +1,8 @@
 [bits 32]
 
-
+; declare an irq function
+; parameter 1: irq number
+; parameter 2: does it require a dummy value on the stack
 %macro DECLIRQ 2
 global __irq %+ %1
 __irq %+ %1:
@@ -13,6 +15,7 @@ __irq %+ %1:
 
 %endmacro
 
+; common body shared between all irq functions
 %macro IRQCOMMON 0
 pusha
 push ds

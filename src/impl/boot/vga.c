@@ -4,25 +4,29 @@
 #include <stdbool.h>
 #include <stdarg.h>
 
+// register numbers for control of the cursor
 #define CRT_CONTROL_REGISTER_PORTNO_A 0x3D4
 #define CRT_CONTROL_REGISTER_PORTNO_B 0x3D5
 #define VGA_CURSOR_CRTINDEX_A 14
 #define VGA_CURSOR_CRTINDEX_B 15
 
+// current position of the blinking '_' onscreen
 static struct {
     unsigned x;
     unsigned y;
 } cursor;
 
+// current colors
 static vgac_t cur_fg = VGA_WHITE;
 static vgac_t cur_bg = VGA_BLACK;
 
-
+// VGA buffer to write to
 VGACell_t* VGAO = (VGACell_t*)(0xc00b8000);
 
 
 static void VGAScroll()
 {
+    // move all the text onscreen up one row
     for ( size_t i = 1; i < VGA_HEIGHT; i++)
     {
         memmove( &VGAO[ (i-1)*VGA_WIDTH ], &VGAO[ i*VGA_WIDTH ], VGA_WIDTH*sizeof(VGACell_t) );

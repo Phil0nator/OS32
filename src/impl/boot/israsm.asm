@@ -1,5 +1,8 @@
 [bits 32]
 
+; declare an isr function
+; parameter 1: isr number
+; parameter 2: does it require a dummy value on the stack
 %macro DECLISR 2
 global __isr %+ %1
 __isr %+ %1:
@@ -12,6 +15,7 @@ __isr %+ %1:
 
 %endmacro
 
+; common body shared between all isr functions
 %macro ISRCOMMON 0
 pusha
 push ds

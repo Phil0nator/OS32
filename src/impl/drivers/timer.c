@@ -5,12 +5,13 @@
 //http://www.osdever.net/bkerndev/Docs/pit.htm
 
 #define PIT_IRQNO (0)
+// Ticks per second
 #define PIT_TPS ((float)18.222)
 
 
 
 static volatile pit_ticks_t total_ticks = 0;
-
+// callback for each interrupt
 static void timer_routine()
 {
     total_ticks++;

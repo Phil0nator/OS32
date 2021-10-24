@@ -2,7 +2,9 @@
 #include "stdlib/instructions.h"
 #include "stdlib/ioinstrs.h"
 
+// Port to set CMOS register 
 #define CMOS_REGSET_PORT 0x70
+// Port to transmit or receive data with CMOS
 #define CMOS_DATA_PORT 0x71
 
 void cmos_write( cmos_reg_t reg, uint8_t value )
