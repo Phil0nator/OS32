@@ -1,5 +1,6 @@
 #include "system/process/elf.h"
 #include "stdlib/string.h"
+#include "stdlib/kmalloc.h"
 #include "stdlib/error.h"
 #include <elf.h>
 
@@ -8,6 +9,12 @@
 #define ELF_SIG_ASSERT(e_ident) if( *(int*)(e_ident) != ELF_SIGNATURE ) { ELF_THROW_EPERM }
 #define ELF_EI_ASSERT( e_ident, idx, val ) if ( e_ident[idx] != val ) { ELF_THROW_EPERM }
 
+typedef struct elf_file
+{
+    Elf32_Ehdr* header;
+    Elf32_Shdr* sections;
+    
+} elf_file_t;
 
 err_t elf_check_validity( Elf32_Ehdr* h )
 {
@@ -19,31 +26,45 @@ err_t elf_check_validity( Elf32_Ehdr* h )
     {
         ELF_THROW_EPERM
     }
+    if ( h->e_type != ET_REL && h->e_type != ET_EXEC )
+    {
+        ELF_THROW_EPERM
+    }
     return OS32_SUCCESS;
 }
 
+struct elf_file* elf_load( elfdat_t elfdat )
+{
+    struct elf_file* out = kmalloc(sizeof(struct elf_file));
+    out->header = (Elf32_Ehdr*) elfdat;
+    if (elf_check_validity( out->header ) == OS32_ERROR)
+    {
+        return OS32_FAILED;
+    }
+    out->sections = (Elf32_Shdr*)(((char*)out->header) + out->header->e_shoff);
 
-elf_fn elf_load_for_exec( elfdat_t elf )
-{
-    Elf32_Ehdr* header_check = (Elf32_Ehdr*) elf;
-    if (elf_check_validity( header_check ) != OS32_SUCCESS)
-    {
-        return OS32_FAILED;
-    }
 }
-elf_fn elf_get_sym( elfdat_t elf, const char* symbol )
+elfdat_t elf_free( struct elf_file* e )
 {
-    Elf32_Ehdr* header_check =(Elf32_Ehdr*) elf;
-    if (elf_check_validity( header_check ) != OS32_SUCCESS)
-    {
-        return OS32_FAILED;
-    }
+    elfdat_t out = (elfdat_t)e->header;
+    kfree(e);
+    return out;
 }
-err_t elf_unload_from_exec( elfdat_t elf )
+
+
+
+elf_fn elf_load_for_exec( struct elf_file* elf )
 {
-    Elf32_Ehdr* header_check =(Elf32_Ehdr*) elf;
-    if (elf_check_validity( header_check ) != OS32_SUCCESS)
-    {
-        return OS32_FAILED;
-    }
+
+
+
+    return elf->header->e_entry;
+}
+elf_fn elf_get_sym( struct elf_file* elf, const char* symbol )
+{
+
+}
+err_t elf_unload_from_exec( struct elf_file* elf )
+{
+
 }

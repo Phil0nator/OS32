@@ -5,9 +5,14 @@
 typedef void (*elf_fn)();
 typedef const char* elfdat_t;
 
+// opaque type
+struct elf_file;
 
-elf_fn elf_load_for_exec( elfdat_t elf );
-elf_fn elf_get_sym( elfdat_t elf, const char* symbol );
-err_t elf_unload_from_exec( elfdat_t elf );
+struct elf_file* elf_load( elfdat_t elfdat );
+elfdat_t elf_free( struct elf_file* e );
+
+elf_fn elf_load_for_exec( struct elf_file* elf );
+elf_fn elf_get_sym( struct elf_file* elf, const char* symbol );
+err_t elf_unload_from_exec( struct elf_file* elf );
 
 #endif

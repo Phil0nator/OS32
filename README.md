@@ -17,13 +17,19 @@ This is a 32bit x86 hobby kernel I have been putting together with help from [os
 - [ OK ] IRQs setup
 - [ OK ] basic TSS setup
 - [ OK ] basic PIT drivers
+- [ OK ] basic RTC drivers
 - [ OK ] basic Keyboard drivers
 - [ OK ] kmalloc and paging
 - [ OK ] FPU setup
 - [ OK ] INITRD loading
+- [ OK ] basic ext2 read-only operations
 
 ## Still WIP
-- [...] ext2 fs implimentation
-- [...] Usermode programs
+- [...] ext2 write implimentation
+- [...] full vfs implimentation
+- [...] Usermode programs / ELF loading
 - [...] syscalls
+- [...] Multiprocessing
+- [...] Terminal emulation / ANSI escape codes
+- [...] Networking
 - [...] ...
