@@ -12,7 +12,7 @@
 #include "stdlib/string.h"
 #include "tests/kmalloc_unit.h"
 #include "stdlib/streambuf.h"
-#include "realtime/vga/rtvgamain.h"
+#include "realtime/realtime.h"
 #include "boot/tss.h"
 #include "stdlib/cpuid.h"
 #include "system/filesystems/linitrd.h"
@@ -127,7 +127,7 @@ void _kernel_main()
     // enter desktop mode:
     vgaPrintf("%+ Entering desktop mode...\n");
     pit_waits(1);
-    rtvgamain();
+    rtmain();
 
 
     for(;;);
