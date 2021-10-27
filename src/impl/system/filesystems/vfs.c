@@ -178,6 +178,12 @@ fd_t vfs_open( const char* fpath, int mode )
                 vfspdt[i].underlying,
                 fspath
             );
+
+            if (underlying < 0)
+            {
+                return OS32_ERROR;
+            }
+
             // get the next available fd
             fd_t vfsfd = alloc_next_fd();
             // Load the appropriate properties into the table
@@ -218,6 +224,7 @@ size_t vfs_read( fd_t fd, char* dest, size_t bytes )
     {
         return vfs_read_file( fd, dest, bytes );
     }
+    return OS32_ERROR;
 }
 size_t vfs_seekg( fd_t fd, size_t amt, int whence )
 {
@@ -293,6 +300,7 @@ err_t vfs_close( fd_t fd )
         vfs_close_file(fd);
     }
     fdt[fd].present = false;
+    return OS32_SUCCESS;
 }
 
 // Copy the data from an ext2fstat struct to a general fstat struct
@@ -313,6 +321,7 @@ void vfs_ext2stat_cpy( struct fstat* dest, const struct ext2_fstat* src )
 err_t vfs_stat(const char* path, struct fstat* buf)
 {
 
+    return OS32_SUCCESS;
 }
 err_t vfs_fstat(fd_t fd, struct fstat* buf)
 {
@@ -339,10 +348,11 @@ err_t vfs_fstat(fd_t fd, struct fstat* buf)
         return OS32_ERROR;
         break;
     }
+    return OS32_SUCCESS;
 }
 err_t vfs_lstat(const char* path, struct fstat* buf)
 {
-
+    return OS32_SUCCESS;
 }
 
 err_t vfs_close_file( fd_t fd )

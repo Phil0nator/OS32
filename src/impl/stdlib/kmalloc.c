@@ -4,6 +4,7 @@
 #include "boot/page.h"
 #include "stdlib/string.h"
 #include "stdlib/ioinstrs.h"
+#include "stdlib/assert.h"
 #include <stdbool.h>
 
 /**
@@ -279,7 +280,7 @@ phys_addr kmalloc_next_phys( )
     return 0;
 }
 
-void kmalloc_alloc_pages( size_t count, void* virtual_addr, page_table_ent_t perms )
+void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual_addr, page_table_ent_t perms )
 {
     // setup
     while (count--)
@@ -291,7 +292,7 @@ void kmalloc_alloc_pages( size_t count, void* virtual_addr, page_table_ent_t per
         void* virt = virtual_addr;
         virtual_addr += PAGE_SIZE;
 
-        wire_page( phys, virt, perms );
+        wire_page(page_directory, phys, virt, perms );
     }
     // flush cpu paging system
     set_cr3(get_cr3());
@@ -327,7 +328,7 @@ err_t __install_kmalloc()
     }
 
     // allocate 100 pages for the heap to start off with
-    kmalloc_alloc_pages( 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){0} );
+    kmalloc_alloc_pages( &boot_page_directory, 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){ .present=1, .rw=1 } );
     // zero out the entire heap to start off
     memset(kmalloc_heap_start, 0, 100*PAGE_SIZE);
 
@@ -346,7 +347,7 @@ kmalloc_ptr kmalloc_page_struct( phys_addr* phys_dest )
     // Otherwise, the virtual address of the can just be given to the
     // phys_addr_of function 
     if (virt > (char*)KERNEL_HEAP_START)
-        *phys_dest = phys_addr_of(virt);
+        *phys_dest = phys_addr_of( &boot_page_directory, virt);
     else
         *phys_dest = virt-(char*)KERNEL_VIRTUAL; 
     return virt;
@@ -372,7 +373,7 @@ kmalloc_ptr krealloc( kmalloc_ptr ptr, size_t size )
 {
     // DNE
     if (!ptr) return kmalloc(size);
-    struct kmalloc_header* header = (struct kmalloc_header*)((char*)ptr)-sizeof(struct kmalloc_header);
+    struct kmalloc_header* header = (struct kmalloc_header*)(((char*)ptr)-sizeof(struct kmalloc_header));
     if ( header->size == size )
     {
         // same
@@ -399,6 +400,21 @@ kmalloc_ptr kcalloc( size_t size )
     memset( out, 0, size );
     return out;
 }
+
+void free_pages(page_dir_t* page_directory, size_t count, void* virtual_addr )
+{
+    vga_assert(!((uint32_t)virtual_addr % 4096));
+    void* final_addr = virtual_addr + count;
+    while (virtual_addr < final_addr)
+    {
+        phys_addr phys = phys_addr_of(page_directory,virtual_addr);
+        phys_free(phys);
+        unwire_page( page_directory, virtual_addr );
+        virtual_addr += PAGE_SIZE;
+    }
+    
+}
+
 size_t kmalloc_volume()
 {
     struct kmalloc_header* it = kmalloc_heap_first;

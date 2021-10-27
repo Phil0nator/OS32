@@ -268,7 +268,7 @@ ext2_inode_t* ext2_get_inode( struct ext2_partition* src, size_t index )
     // Find which group the indode belongs to
     size_t group = (index-1) / src->base_superbock->in_grp;
     // find the block in which the inode resides
-    size_t grouped_idx = (index-1) % src->base_superbock->in_grp;
+    // size_t grouped_idx = (index-1) % src->base_superbock->in_grp;
     // find the block index in which the inode resides
     // size_t block = ( grouped_idx * src->inode_size ) / src->block_size;
     // find the inode table in which the inode resisdes
@@ -392,7 +392,7 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
         // find the next slash in the path
         uint32_t next_slash = strchr(path, '/');
         // If there is another slash in the path,
-        if (next_slash != -1ull)
+        if (next_slash != -1ul)
         {
             // copy this piece of path and advance
             // ie. /home/beans/Documents
@@ -424,7 +424,7 @@ ext2_inode_t* ext2_getf( ext2_partition_t* src, const char* path, bool syml )
         // update the current directory with the inode number
         cur_dir = ext2_get_inode( src, next_inode );
         // If at the end of the path, break the loop
-        if (next_slash == -1ull) break;
+        if (next_slash == -1ul) break;
     }
     // For symbolic links:
     // TODO: fix so it doesn't always run
@@ -453,7 +453,7 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
     // load in the raw pointer
     dest->raw_data = raw;
     // identify superblock
-    dest->base_superbock = (ext2_base_superblock_t*) raw + 1024;
+    dest->base_superbock = (ext2_base_superblock_t*)( raw + 1024);
     // ensure that this is a valid ext2 partition
     if (dest->base_superbock->sig != EXT2_SIGNATURE)
     {
@@ -464,7 +464,7 @@ err_t ext2_init( struct ext2_partition** _dest, char* raw )
     dest->block_size = 1024 << dest->base_superbock->bl_size;
     dest->frag_size = 1024 << dest->base_superbock->bl_size;
     // locate the block group descriptor table
-    dest->bgdt = (ext2_block_group_descriptor_t*) raw + dest->block_size;
+    dest->bgdt = (ext2_block_group_descriptor_t*) (raw + dest->block_size);
     // depending on the version of this ext2 partition,
     // different values will be used.
     if (dest->base_superbock->ver_maj >= 1)
@@ -543,6 +543,7 @@ err_t ext2_close(struct ext2_partition* p, fd_t fd )
     }
     // reset the entry in the file descriptor table to NULL
     p->relations[fd].inode = 0;
+    return OS32_SUCCESS;
 }
 
 // translate the inode data over to the fstat structure
@@ -598,6 +599,7 @@ err_t ext2_lstat(struct ext2_partition* p, const char* path, struct ext2_fstat* 
     if (in == OS32_FAILED) return OS32_ERROR;
     // copy the inode data to the fstat struct
     ext2_stat_inodecpy( in, buf );
+    return OS32_SUCCESS;
 }
 
 #pragma pack(0)

@@ -60,10 +60,12 @@ typedef struct page_dir
 extern page_dir_t boot_page_directory;
 
 // Convert a valid virtual address to a physical address
-phys_addr phys_addr_of( const void* virtual_addr );
+phys_addr phys_addr_of(page_dir_t* page_directory, const void* virtual_addr );
 
 // Wire a physical and virtual page with the given permissions
-void wire_page( phys_addr phys, const void* virt, page_table_ent_t flags );
+void wire_page(page_dir_t* page_directory, phys_addr phys, const void* virt, page_table_ent_t flags );
+
+void unwire_page( page_dir_t* page_directory, const void* virt);
 
 // DEPRICATED
 const void* next_virt();

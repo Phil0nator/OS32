@@ -13,6 +13,7 @@
         "limits": "cpp",
         "*.tcc": "cpp",
         "type_traits": "cpp",
-        "elf.h": "c"
+        "elf.h": "c",
+        "linitrd.h": "c"
     }
 }

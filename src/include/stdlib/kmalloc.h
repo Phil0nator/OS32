@@ -19,13 +19,13 @@ err_t __install_kmalloc();
  * @param virtual_addr desired virtual address of first page
  * @param perms permissions applied to the pages
  */
-void kmalloc_alloc_pages( size_t count, void* virtual_addr, page_table_ent_t perms );
+void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual_addr, page_table_ent_t perms );
 /**
  * Free allocated physical pages
  * @param count number of physical pages
  * @param virtual_addr virtual address of first physical page
  */
-void free_pages( size_t count, void* virtual_addr );
+void free_pages(page_dir_t* page_directory, size_t count, void* virtual_addr );
 
 /**
  * kmalloc a page aligned page, and return the physical address that corresponds to the returned virtual address.

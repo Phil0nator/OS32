@@ -1,0 +1,24 @@
+#include "tests/elftest.h"
+#include "system/filesystems/linitrd.h"
+#include "system/filesystems/vfs.h"
+#include "stdlib/kmalloc.h"
+#include "system/process/elf.h"
+#include "stdlib/string.h"
+void __elf_test()
+{
+    fd_t fd = vfs_open( "/initrd/bin/test", 0);
+    vfs_seekg( fd, 0, VFS_SEEK_END );
+    size_t len = vfs_tellg(fd);
+    vfs_seekg( fd, 0, VFS_SEEK_SET );
+    char* data = kmalloc( len );
+    vfs_read(fd, data, len);
+    struct elf_file* elf = elf_load( data );
+    process_t proc;
+    bzero(&proc, sizeof(process_t));
+
+    elf_load_for_exec( elf, &proc );
+
+    elf_free(elf);
+    kfree(data);
+    vfs_close(fd);
+}

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g -F dwarf -O0 -m32 -Isrc/include -c -ffreestanding -nostdlib -mno-red-zone -Wall -Wextra
-USERMODEFLAGS = -O0 -m32 -nostdlib -Wall -Wextra
+USERMODEFLAGS = -O0 -m32 -nostdlib -static -ffreestanding -Wall -Wextra
 
 
 ASMSRC := $(shell find src/ -name "*.asm")
