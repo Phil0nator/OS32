@@ -25,8 +25,9 @@ err_t __install_tss()
 
 
 
-void tss_enter_usermode( void* entrpoint )
+void tss_enter_usermode( void* entrpoint, tss_t* tss )
 {
     // defined in asm
+    __tss = *tss;
     __umode_iret( entrpoint );
 }

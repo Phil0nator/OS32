@@ -14,9 +14,13 @@ typedef struct process
     tid_t tid;
     tss_t tss;
 
-    page_dir_t pdir;
-    
+    page_dir_t* pdir;
+    phys_addr pdir_phys;
 
 } process_t;
+
+void process_create( process_t* dest );
+void process_destroy( process_t* proc );
+void process_start( process_t* proc, void (*entrypoint)() );
 
 #endif

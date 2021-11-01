@@ -22,9 +22,11 @@
 // Chosen kernel heap physical address-space end
 #define KERNEL_PHYS_END (0x200000)
 
+#define MEM_UPPER_START (1048576)
 // Get the nth bit of x
 #define BIT_N_OF_X(x, n) (bool)((x) & (1<<(n)))
-
+#define SET_BIT_N_OF_X(x, n) ((x) |= (1<<(n)))
+#define UNSET_BIT_N_OF_X(x, n) ((x) &= (~(1<<(n))))
 
 // linker-defined
 extern volatile phys_addr* _kernel_start;
@@ -44,7 +46,7 @@ static void* kmalloc_heap_start = (void*) KERNEL_HEAP_START;
 static void* kmalloc_heap_end = (void*) KERNEL_HEAP_START+(PAGE_SIZE*100);
 
 // the initial page returned by kmalloc to set up paging
-static char bootstrap_page[PAGE_SIZE] __attribute__ ((aligned (PAGE_SIZE)));
+static char bootstrap_page[PAGE_SIZE*2] __attribute__ ((aligned (PAGE_SIZE)));
 // bootstrap stage
 static int kmalloc_stage = 0;
 
@@ -181,12 +183,23 @@ void kmalloc_merge( struct kmalloc_header* h )
             return;
         }
         // if at the end, break
-        if (it->next == kmalloc_heap_last) break;
+        if (it == kmalloc_heap_last) break;
         it = it->next;
     }
     // If no merge opporitunities could be found,
     // append h to the end of the heap
     kmalloc_push(h);
+}
+
+void kmalloc_expand()
+{
+    kmalloc_alloc_pages( &boot_page_directory, 16, kmalloc_heap_end, (page_table_ent_t){.present=1,.rw=1});
+    struct kmalloc_header* newmem = kmalloc_heap_end;
+    kmalloc_heap_end += 16*PAGE_SIZE;
+    newmem->size = 16*PAGE_SIZE - sizeof(struct kmalloc_header);
+    newmem->next = NULL;
+    newmem->prev = NULL;
+    kmalloc_push( newmem );
 }
 
 // TODO: Alignment
@@ -198,7 +211,7 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
     // first call
     if (kmalloc_stage == 0) {
         kmalloc_stage ++;
-        return (struct kmalloc_header*) bootstrap_page;
+        return ((struct kmalloc_header*) bootstrap_page)-1;
     }
     // second call
     else if (kmalloc_stage == 1)
@@ -210,63 +223,100 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
         kmalloc_stage++;
     }
     // all further calls:
-    
+    else 
+    {
+        if ((int)(kmalloc_volume() - size) < 2*PAGE_SIZE)
+        {
+            kmalloc_expand();
+        }
+
+
+    }
+
     // for each pointer in the heap... 
     while (ptr)
     {
         // if the pointer has enough space for the requested amount
-        if (ptr->size >= size)
+        if (
+            // pointer has enough size
+            ptr->size >= size && 
+            (
+                // Pointer is aligned correctly
+                ((uint32_t)ptr % align == 0) || 
+                // OR, pointer can be aligned correctly via a split
+                (ptr->size - (align-(uint32_t)ptr % align) >= size+sizeof(struct kmalloc_header))
+            )
+        )
         {
-            // slice off exactly the requested amount of memory
-            kmalloc_split( ptr, size );
-            // remove the pointer from the 'free' heap
-            kmalloc_remove( ptr );
-            // return the pointer
+            if (((uint32_t)ptr % align == 0))
+            {
+                // slice off exactly the requested amount of memory
+                kmalloc_split( ptr, size );
+                // remove the pointer from the 'free' heap
+                kmalloc_remove( ptr );
+                
+            }
+            else
+            {   
+                struct kmalloc_header* alignedptr = (char*)ptr + (align-(uint32_t)ptr % align) - sizeof(struct kmalloc_header);
+                size_t total_size = ptr->size;
+                ptr->size = (char*)alignedptr-((char*)ptr + sizeof(struct kmalloc_header));
+                alignedptr->size = total_size-ptr->size-sizeof(struct kmalloc_header);
+                alignedptr->next = NULL;
+                alignedptr->prev = NULL;
+                kmalloc_split( alignedptr, size );
+                ptr = alignedptr;
+            }
+            
             return ptr;
         }
         // if at the end, break;
-        if (ptr->next == kmalloc_heap_last) break;
+        if (ptr == kmalloc_heap_last) break;
 
         ptr=ptr->next;
     }
-    // TODO: 
-    // add a way to page more memory to expand the kernel heap
+
+
     return NULL;
 }
 
 // determine if a physical address is reserved or not
 bool phys_available( phys_addr addr )
 {
-    return physical_present[addr/PAGE_SIZE] & (1<<(addr/PAGE_SIZE/8));
+    // return physical_present[addr/PAGE_SIZE/8] & (1<<((addr/PAGE_SIZE)%8));
+    return BIT_N_OF_X( physical_present[addr/PAGE_SIZE/8], (addr/PAGE_SIZE)%8 );
 }
 // reserve a physical address
 void phys_reserve( phys_addr addr )
 {
-    physical_present[addr/PAGE_SIZE] |= ((1<<((addr/PAGE_SIZE)/8))-1);
+    // physical_present[addr/PAGE_SIZE/8] |= ((1<<((addr/PAGE_SIZE)%8)));
+    SET_BIT_N_OF_X( physical_present[addr/PAGE_SIZE/8], (addr/PAGE_SIZE)%8 );
 }
 // free a physical address
 void phys_free(phys_addr addr)
 {
-    physical_present[addr/PAGE_SIZE] &= ~((1<<((addr/PAGE_SIZE)/8))-1);
+    // physical_present[addr/PAGE_SIZE/8] &= ~((1<<((addr/PAGE_SIZE)%8)));
+    UNSET_BIT_N_OF_X( physical_present[addr/PAGE_SIZE/8], (addr/PAGE_SIZE)%8 );
 }
 // get the next available physical address
 phys_addr kmalloc_next_phys( )
 {
     // Traverse the bitfield, searching for the next 
     // unreserved physical address
-    for (size_t i = 0; i < sizeof(physical_present); i++)
+    for (size_t i = (MEM_UPPER_START/PAGE_SIZE)/8; i < sizeof(physical_present); i++)
     {
         // if any pages of this group of 8 are reserved...
         if (physical_present[i])
         {   
+            if (physical_present[i] == '\377') continue;
             // check each page
-            for (size_t j = 0; j < sizeof(char); j++)
+            for (size_t j = 0; j < 8; j++)
             {
                 // if any bit is not set,
                 if (!BIT_N_OF_X((physical_present[i]), j))
                 {
                     // return the corresponding page
-                    return (i+j)*PAGE_SIZE;
+                    return ((i*8)+j)*PAGE_SIZE;
                 }
             }
         }
@@ -274,7 +324,7 @@ phys_addr kmalloc_next_phys( )
         else
         {
             // return the first
-            return i*PAGE_SIZE;
+            return i*8*PAGE_SIZE;
         }
     }
     return 0;
@@ -283,7 +333,7 @@ phys_addr kmalloc_next_phys( )
 void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual_addr, page_table_ent_t perms )
 {
     // setup
-    while (count--)
+    for(size_t i = 0; i < count; i++)
     {
 
         phys_addr phys = kmalloc_next_phys();
@@ -317,7 +367,7 @@ err_t __install_kmalloc()
     // reserve the first chunk of physical memory for:
     // - reserved low space (BIOS, etc...)
     // - kernel space
-    memset( physical_present, 0xff,(( 0x100000 + (KERNEL_PHYS_END-KERNEL_PHYS_START))/PAGE_SIZE)/8 );
+    memset( physical_present, 0xff,(( MEM_UPPER_START + (KERNEL_PHYS_END-KERNEL_PHYS_START))/PAGE_SIZE)/8 );
 
     // reserve memory for modules
     for ( size_t i = 0; i < __multiboot_info.mods_count; i++ )
@@ -346,11 +396,12 @@ kmalloc_ptr kmalloc_page_struct( phys_addr* phys_dest )
     // virtual address is sufficient.
     // Otherwise, the virtual address of the can just be given to the
     // phys_addr_of function 
-    if (virt > (char*)KERNEL_HEAP_START)
-        *phys_dest = phys_addr_of( &boot_page_directory, virt);
+    char* ptr = virt + sizeof(struct kmalloc_header);
+    if (ptr > (char*)KERNEL_HEAP_START)
+        *phys_dest = phys_addr_of( &boot_page_directory, ptr);
     else
-        *phys_dest = virt-(char*)KERNEL_VIRTUAL; 
-    return virt;
+        *phys_dest = ptr-(char*)KERNEL_VIRTUAL; 
+    return ptr;
 }
 
 
@@ -362,7 +413,7 @@ kmalloc_ptr kmalloc( size_t size )
 }
 void kfree( kmalloc_ptr ptr )
 {
-    if (!ptr) return;
+    if (!ptr || ptr == bootstrap_page) return;
     kmalloc_merge((struct kmalloc_header*)(((char*)ptr)-sizeof(struct kmalloc_header)));
 }
 void kprotect( kmalloc_ptr ptr)
@@ -422,7 +473,7 @@ size_t kmalloc_volume()
     while (it)
     {
         counter += sizeof(struct kmalloc_header) + it->size;
-        if (kmalloc_heap_last == it->next) break;
+        if (kmalloc_heap_last == it) break;
         it = it->next;
     }
     return counter;
@@ -434,7 +485,7 @@ struct kmalloc_header* kmalloc_header_index( size_t idx )
     while (it && idx)
     {
         idx--;
-        if (kmalloc_heap_last == it->next) break;
+        if (kmalloc_heap_last == it) break;
         it = it->next;
     }
     return it;

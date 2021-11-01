@@ -68,25 +68,29 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
     perms.present = 1;
     perms.rw = (bool)(sh->sh_flags & SHF_WRITE);
     perms.user = 1;
-    size_t pgs = (sh->sh_size / PAGE_SIZE)+1;
+    void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x03ff));
+    
+    size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
+
     kmalloc_alloc_pages( 
-        &proc->pdir, 
+        proc->pdir, 
         pgs, 
-        sh->sh_addr, 
+        page_aligned_shaddr, 
         perms
     );
     for (size_t i = 0; i < pgs; i++)
     {
+        void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
         wire_page( 
             &boot_page_directory, 
-            phys_addr_of( &proc->pdir, sh->sh_addr+i*PAGE_SIZE ),
-            sh->sh_addr+i*PAGE_SIZE,
+            phys_addr_of( proc->pdir, addr ),
+            addr,
             (page_table_ent_t){.present=1,.rw=1} 
         );
-        memset( sh->sh_addr + i * PAGE_SIZE, 0, PAGE_SIZE);
+        memset( addr, 0, PAGE_SIZE);
         unwire_page( 
             &boot_page_directory, 
-            sh->sh_addr+i*PAGE_SIZE
+            addr
         );
     }
 }
@@ -207,29 +211,32 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
             {
                 page_table_ent_t perms = {0};
                 perms.present = 1;
-                perms.rw = (bool)( sh->sh_flags & SHF_WRITE); 
+                perms.rw = (bool)(sh->sh_flags & SHF_WRITE);
                 perms.user = 1;
-                size_t pgs = (sh->sh_size / PAGE_SIZE) + 1;
+                void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x03ff));
+                
+                size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
+
                 kmalloc_alloc_pages( 
-                    &proc->pdir, 
+                    proc->pdir, 
                     pgs, 
-                    sh->sh_addr, 
+                    page_aligned_shaddr, 
                     perms
                 );
                 for (size_t i = 0; i < pgs; i++)
                 {
+                    void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
                     wire_page( 
                         &boot_page_directory, 
-                        phys_addr_of( &proc->pdir, sh->sh_addr+i*PAGE_SIZE ),
-                        sh->sh_addr+i*PAGE_SIZE,
-                        (page_table_ent_t){NULL} 
+                        phys_addr_of( proc->pdir, addr ),
+                        addr,
+                        (page_table_ent_t){.present=1,.rw=1} 
                     );
-                    memcpy(  sh->sh_addr + i * PAGE_SIZE, (char*)elf->header+sh->sh_offset+i*PAGE_SIZE, PAGE_SIZE );
-                    // memset( sh->sh_addr + i * PAGE_SIZE, 0, PAGE_SIZE);
-                    
+                    // memset( addr, 0, PAGE_SIZE);
+                    memcpy( sh->sh_addr+i*PAGE_SIZE, (char*)elf->header+sh->sh_offset+i*PAGE_SIZE, PAGE_SIZE);
                     unwire_page( 
                         &boot_page_directory, 
-                        sh->sh_addr+i*PAGE_SIZE
+                        addr
                     );
                 }
             }

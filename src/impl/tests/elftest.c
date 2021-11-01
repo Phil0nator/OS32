@@ -15,9 +15,12 @@ void __elf_test()
     struct elf_file* elf = elf_load( data );
     process_t proc;
     bzero(&proc, sizeof(process_t));
+    process_create(&proc);
 
-    elf_load_for_exec( elf, &proc );
+    void (*entry)() = elf_load_for_exec( elf, &proc );
+    process_start(&proc, entry);
 
+    process_destroy(&proc);
     elf_free(elf);
     kfree(data);
     vfs_close(fd);

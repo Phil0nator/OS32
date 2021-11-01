@@ -2,8 +2,8 @@
 
 void memcpy( void * dest, const void * source, size_t bytes )
 {
-    for (;bytes;bytes--)
-        ((char*)dest)[bytes-1]=((const char*)source)[bytes-1];
+    for (size_t i = 0;i < bytes;i++)
+        ((char*)dest)[i]=((const char*)source)[i];
 }
 void memset( void* dest, char byte, size_t count )
 {

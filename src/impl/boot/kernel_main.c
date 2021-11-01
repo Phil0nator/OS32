@@ -124,8 +124,6 @@ void _kernel_main()
 
     __kernel_main_sti
 
-    // tss_enter_usermode( testfn );
-
     __elf_test();
 
     // enter desktop mode:
