@@ -31,7 +31,7 @@ void memmove( void* dest, const void* source, size_t bytes );
  * @param dest memory start
  * @param bytes number of bytes to zero
  */
-void bzero( char* dest, size_t bytes );
+void bzero( void* dest, size_t bytes );
 /**
  * Compare two blocks of memory
  * @param a one block

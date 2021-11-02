@@ -15,10 +15,13 @@ __ltr:
     ret
 
 ; https://wiki.osdev.org/Getting_to_Ring_3
-; void __umode_iret( void (*x)() )
+; void __umode_iret( void (*x)(), void* stack )
 __umode_iret:
+    cli
     push ebp
     mov ebp, esp
+    mov ebx, dword[ebp+8]
+    mov edx, dword[ebp+12]
     mov ax, (5 * 8) | 3
     mov ds, ax
     mov es, ax
@@ -27,10 +30,10 @@ __umode_iret:
 
     mov eax, esp
     push (5 * 8) | 3
-    push eax
+    push edx
     pushf
     push (4 * 8) | 3
-    push dword[ebp+8]
+    push ebx
     iret
     leave
     ret

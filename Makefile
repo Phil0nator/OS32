@@ -32,7 +32,7 @@ OS32: $(COUT) $(ASMOUT) $(USROUT)
 	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86/kernel.iso targets/x86/iso
 
 OS32_DBG: OS32
-	qemu-system-i386 dist/x86/kernel.iso -s -S
+	sleep 1 && qemu-system-i386 dist/x86/kernel.iso -s -S
 
 purge:
 	rm -rf build/ && mkdir build

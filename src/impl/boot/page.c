@@ -43,9 +43,9 @@ void unwire_page( page_dir_t* page_directory, const void* virt)
     {
         if (table->pages[i].present) goto clean_ret;
     }
-    kfree( table );
-    page_directory->virtuals[directory_idx] = NULL;
-    page_directory->tables[directory_idx].present = 0;
+    // kfree( table );
+    // page_directory->virtuals[directory_idx] = NULL;
+    // page_directory->tables[directory_idx].present = 0;
 
     clean_ret:
     __invlpg_flush();
@@ -53,7 +53,7 @@ void unwire_page( page_dir_t* page_directory, const void* virt)
 
 void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, page_table_ent_t flags )
 {
-    virt = (uint32_t)virt & (~0x03ff);
+    virt = (char*)((uint32_t)virt & (~0x03ff));
     va_conv_t converter;
     memcpy( &converter, &virt, sizeof(virt) );
     // *(uint32_t*)(&converter) = (uint32_t) virt;
@@ -79,17 +79,19 @@ void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, pa
         page_directory->virtuals[directory_idx] = table;
     }
     page_dir_ent_t* te = &table->pages[table_idx];
-
+    *(uint32_t*)te = 0;
     *(uint32_t*)te = phys | (*(uint32_t*)&flags) | 3;
     // PAGE_SET_ADDR(*te, 0);
     te->frame = phys >> 12 & 0x03FF;
     te->present = 1;
     te->user = flags.user;
+    te->rw = flags.rw;
     // te->rw = 1;
     // PAGE_SET_ADDR(*te, phys);
     // PAGE_SET_BIT(*te, PAGE_PRESENT, 1);
     // PAGE_SET_BIT(*te, PAGE_RW, 1);
     __invlpg_flush();
+    set_cr3(get_cr3());
 }
 
 const void* next_virt()

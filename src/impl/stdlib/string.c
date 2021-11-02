@@ -13,9 +13,9 @@ void memset( void* dest, char byte, size_t count )
 }
 
 
-void bzero( char* dest, size_t bytes )
+void bzero( void* dest, size_t bytes )
 {
-    for (;bytes;bytes--) dest[bytes-1] = 0;
+    for (;bytes;bytes--) ((char*)dest)[bytes-1] = 0;
 }
 
 

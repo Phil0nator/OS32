@@ -337,12 +337,12 @@ size_t ext2_read_bytes( struct ext2_partition* p, ext2_inode_t* src, char* buf, 
 uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* name )
 {
     // buffer to store one chunk of the table at a time
-    char buffer[1024];
+    char buffer[1024] = {0};
     // while true...
     for(size_t iter = 0; 1; iter++ )
     {
         // read data from the table into the buffer
-        if (ext2_read_bytes( p, dir, buffer, sizeof(buffer), iter ) <= 0) return OS32_ERROR;
+        if (ext2_read_bytes( p, dir, buffer, sizeof(buffer), iter*sizeof(buffer) ) <= 0) return OS32_ERROR;
         for 
         (
             // find the direntry
@@ -353,6 +353,11 @@ uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* na
             head = (ext2_dirent_head_t*)(((char*)head)+head->size)
         )
         {
+            if (head->size == 0)
+            {
+                __set_errno(ENOENT);
+                return OS32_ERROR;
+            }
             // get the name of the dirent
             char* cur_name = ((char*)head)+sizeof(ext2_dirent_head_t);
             // if the name matches the requested name,

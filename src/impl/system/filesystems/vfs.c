@@ -119,6 +119,8 @@ static vfs_partition_t vfspdt[VFS_MAX_MEDIA];
 
 size_t vfs_read_file( fd_t fd, char* dest, size_t bytes );
 size_t vfs_write_file( fd_t fd, const char* src, size_t bytes );
+err_t vfs_close_file( fd_t fd );
+
 
 // Get the next available descriptor 
 fd_t alloc_next_fd()

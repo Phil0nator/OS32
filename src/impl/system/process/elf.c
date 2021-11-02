@@ -143,6 +143,7 @@ int elf_get_symval( struct elf_file* elf, int table, unsigned index )
         Elf32_Shdr *target = elf_get_shdr(elf, symbol->st_shndx);
         return (int)elf->header + symbol->st_value + target->sh_offset;
     }
+    
 }
 
 err_t elf_reloc( struct elf_file* elf, Elf32_Rel* reltab, Elf32_Shdr* sh )
@@ -168,7 +169,7 @@ err_t elf_reloc( struct elf_file* elf, Elf32_Rel* reltab, Elf32_Shdr* sh )
     default:
         break;
     }
-
+    return OS32_SUCCESS;
 }
 
 void elf_load_phase_2( struct elf_file* elf, process_t* proc)
@@ -216,7 +217,7 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                 void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x03ff));
                 
                 size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
-
+                void* last_addr = page_aligned_shaddr+pgs*PAGE_SIZE;
                 kmalloc_alloc_pages( 
                     proc->pdir, 
                     pgs, 
@@ -233,7 +234,21 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                         (page_table_ent_t){.present=1,.rw=1} 
                     );
                     // memset( addr, 0, PAGE_SIZE);
-                    memcpy( sh->sh_addr+i*PAGE_SIZE, (char*)elf->header+sh->sh_offset+i*PAGE_SIZE, PAGE_SIZE);
+                    if ( i != pgs-1 )
+                        memcpy
+                        ( 
+                            (char*)sh->sh_addr+i*PAGE_SIZE, 
+                            (char*)elf->header+sh->sh_offset+i*PAGE_SIZE, 
+                            sh->sh_size
+                        );
+                    else
+                        memcpy
+                        ( 
+                            (char*)sh->sh_addr+i*PAGE_SIZE, 
+                            (char*)elf->header+sh->sh_offset+i*PAGE_SIZE,
+                            (char*)last_addr-((char*)sh->sh_addr+i*PAGE_SIZE)
+                        );
+
                     unwire_page( 
                         &boot_page_directory, 
                         addr
@@ -244,7 +259,7 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
         }
     }
 
-    return elf->header->e_entry;
+    return (elf_fn) elf->header->e_entry;
 }
 elf_fn elf_get_sym( struct elf_file* elf, const char* symbol )
 {

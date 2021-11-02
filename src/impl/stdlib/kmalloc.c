@@ -11,8 +11,6 @@
  * Memory constants
  */
 
-// upper memory
-#define MEM_UPPER_START (1000000)
 // higher half start
 #define KERNEL_VIRTUAL (0xc0000000)
 // Chosen kernel heap virtual address-space
@@ -21,7 +19,7 @@
 #define KERNEL_PHYS_START (0x100000)
 // Chosen kernel heap physical address-space end
 #define KERNEL_PHYS_END (0x200000)
-
+// upper memory
 #define MEM_UPPER_START (1048576)
 // Get the nth bit of x
 #define BIT_N_OF_X(x, n) (bool)((x) & (1<<(n)))
@@ -258,7 +256,7 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
             }
             else
             {   
-                struct kmalloc_header* alignedptr = (char*)ptr + (align-(uint32_t)ptr % align) - sizeof(struct kmalloc_header);
+                struct kmalloc_header* alignedptr = (struct kmalloc_header*) ( (char*)ptr + (align-(uint32_t)ptr % align) - sizeof(struct kmalloc_header));
                 size_t total_size = ptr->size;
                 ptr->size = (char*)alignedptr-((char*)ptr + sizeof(struct kmalloc_header));
                 alignedptr->size = total_size-ptr->size-sizeof(struct kmalloc_header);
@@ -284,7 +282,7 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
 bool phys_available( phys_addr addr )
 {
     // return physical_present[addr/PAGE_SIZE/8] & (1<<((addr/PAGE_SIZE)%8));
-    return BIT_N_OF_X( physical_present[addr/PAGE_SIZE/8], (addr/PAGE_SIZE)%8 );
+    return !BIT_N_OF_X( physical_present[addr/PAGE_SIZE/8], (addr/PAGE_SIZE)%8 );
 }
 // reserve a physical address
 void phys_reserve( phys_addr addr )
@@ -351,7 +349,9 @@ void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual
 // reserve a set of pages
 void phys_reserve_pages( phys_addr start, phys_addr end )
 {
-    for (;start < end; start += PAGE_SIZE)
+    start&=0x03ff;
+    size_t last_page = (end&0x03ff)+1;
+    for (;start < last_page; start += PAGE_SIZE)
     {
         phys_reserve(start);
     }

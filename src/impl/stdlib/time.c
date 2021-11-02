@@ -22,6 +22,7 @@ static uint32_t days_before_month( uint32_t mno )
 {
     uint32_t out = 0;
     while (mno) out+=days_in_months[mno--];
+    return out;
 }
 
 

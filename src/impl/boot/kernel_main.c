@@ -124,6 +124,7 @@ void _kernel_main()
 
     __kernel_main_sti
 
+    __initrdext2_test();
     __elf_test();
 
     // enter desktop mode:

@@ -4,9 +4,15 @@
 #include "stdlib/kmalloc.h"
 #include "system/process/elf.h"
 #include "stdlib/string.h"
+
+
 void __elf_test()
 {
     fd_t fd = vfs_open( "/initrd/bin/test", 0);
+    if (fd < 0)
+    {
+        kpanic("could not open test.elf");
+    }
     vfs_seekg( fd, 0, VFS_SEEK_END );
     size_t len = vfs_tellg(fd);
     vfs_seekg( fd, 0, VFS_SEEK_SET );

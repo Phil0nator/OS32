@@ -9,5 +9,4 @@ void __initrdext2_test()
     vfs_read( fd, buffer, 1024 );
     vfs_close( fd );
     vgaPuts(buffer);
-
 }
