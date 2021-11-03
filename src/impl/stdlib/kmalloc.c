@@ -349,8 +349,9 @@ void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual
 // reserve a set of pages
 void phys_reserve_pages( phys_addr start, phys_addr end )
 {
-    start&=0x03ff;
-    size_t last_page = (end&0x03ff)+1;
+    // start&=(~0x1000);
+    start = PAGE_ALIGNED(start);
+    size_t last_page = (end&(~0x1000))+1;
     for (;start < last_page; start += PAGE_SIZE)
     {
         phys_reserve(start);

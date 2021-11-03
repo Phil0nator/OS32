@@ -6,5 +6,5 @@ int _start(int argc, char const *argv[])
 {
     for(;;);
     
-    return 0;
+    return argc;
 }

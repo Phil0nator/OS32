@@ -17,6 +17,7 @@ extern page_dir_t boot_page_directory;
 
 phys_addr phys_addr_of(page_dir_t* page_directory, const void* virtual_addr )
 {
+    virtual_addr = (void*)PAGE_ALIGNED(virtual_addr);
     va_conv_t converter;
     memcpy( &converter, &virtual_addr, sizeof(virtual_addr) );
     // *(uint32_t*)(&converter) = (uint32_t) virt;
@@ -53,12 +54,14 @@ void unwire_page( page_dir_t* page_directory, const void* virt)
 
 void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, page_table_ent_t flags )
 {
-    virt = (char*)((uint32_t)virt & (~0x03ff));
+    // virt = (char*)((uint32_t)virt & (~0x03ff));
+    virt = (const void*) PAGE_ALIGNED(virt);
     va_conv_t converter;
     memcpy( &converter, &virt, sizeof(virt) );
     // *(uint32_t*)(&converter) = (uint32_t) virt;
     uint32_t directory_idx = converter.di;
     uint32_t table_idx = converter.ti;
+    
     
 
     page_table_t* table = (page_table_t*) page_directory->virtuals[directory_idx];
@@ -67,8 +70,9 @@ void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, pa
         phys_addr tphys;
         table = kmalloc_page_struct((phys_addr*)(&tphys));
         memset(table, 0, PAGE_SIZE);
-        page_directory->tables[directory_idx].frame = tphys >> 12 & 0x03FF;
-        // *(uint32_t*)&page_directory.tables[directory_idx] = tphys;
+        page_directory->tables[directory_idx].frame = PAGE_ALIGNED(tphys)/PAGE_SIZE;
+        
+        // *(uint32_t*)&page_directory->tables[directory_idx] = tphys;
         page_directory->tables[directory_idx].present = 1;
         page_directory->tables[directory_idx].rw = 1;
         page_directory->tables[directory_idx].user = flags.user;
@@ -80,9 +84,9 @@ void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, pa
     }
     page_dir_ent_t* te = &table->pages[table_idx];
     *(uint32_t*)te = 0;
-    *(uint32_t*)te = phys | (*(uint32_t*)&flags) | 3;
+    // *(uint32_t*)te = (phys&0x03ff) | (*(uint32_t*)&flags) | 3;
     // PAGE_SET_ADDR(*te, 0);
-    te->frame = phys >> 12 & 0x03FF;
+    te->frame = PAGE_ALIGNED(phys)/PAGE_SIZE;
     te->present = 1;
     te->user = flags.user;
     te->rw = flags.rw;

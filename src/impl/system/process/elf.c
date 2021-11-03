@@ -68,8 +68,8 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
     perms.present = 1;
     perms.rw = (bool)(sh->sh_flags & SHF_WRITE);
     perms.user = 1;
-    void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x03ff));
-    
+    // void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x1000));
+    void* page_aligned_shaddr = (void*)PAGE_ALIGNED(sh->sh_addr);
     size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
 
     kmalloc_alloc_pages( 
@@ -85,7 +85,7 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
             &boot_page_directory, 
             phys_addr_of( proc->pdir, addr ),
             addr,
-            (page_table_ent_t){.present=1,.rw=1} 
+            (page_table_ent_t){.present=1,.rw=1,.user=1} 
         );
         memset( addr, 0, PAGE_SIZE);
         unwire_page( 
@@ -208,14 +208,14 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
         case SHT_RELA:
             break;
         default:
-            if ((sh->sh_flags & SHF_ALLOC) && sh->sh_entsize > 0)
+            if ((sh->sh_flags & SHF_ALLOC) && sh->sh_size > 0)
             {
                 page_table_ent_t perms = {0};
                 perms.present = 1;
                 perms.rw = (bool)(sh->sh_flags & SHF_WRITE);
                 perms.user = 1;
-                void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x03ff));
-                
+                // void* page_aligned_shaddr = (void*)(sh->sh_addr & (~0x1000));
+                void* page_aligned_shaddr = (void*)PAGE_ALIGNED(sh->sh_addr);
                 size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
                 void* last_addr = page_aligned_shaddr+pgs*PAGE_SIZE;
                 kmalloc_alloc_pages( 
@@ -227,11 +227,12 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                 for (size_t i = 0; i < pgs; i++)
                 {
                     void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
+                    
                     wire_page( 
                         &boot_page_directory, 
                         phys_addr_of( proc->pdir, addr ),
                         addr,
-                        (page_table_ent_t){.present=1,.rw=1} 
+                        (page_table_ent_t){.present=1,.rw=1, .user=1} 
                     );
                     // memset( addr, 0, PAGE_SIZE);
                     if ( i != pgs-1 )

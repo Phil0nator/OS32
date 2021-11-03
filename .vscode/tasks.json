@@ -3,7 +3,7 @@
         {
             "type": "cppbuild",
             "label": "C/C++: gcc-10 build active file",
-            "command": "make",
+            "command": "echo",
             "args": [
                 "OS32"
             ],

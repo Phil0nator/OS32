@@ -12,6 +12,7 @@
 #define PAGE_SET_ADDR(ent, addr)(PAGE_INTIZE(ent) = (addr))
 #define PAGE_SET_BIT( ent, bit, val ) (PAGE_INTIZE(ent) = (val) ? (PAGE_INTIZE(ent)|(1<<bit)) : (PAGE_INTIZE(ent)&~(1<<bit)) )
 
+#define PAGE_ALIGNED(addr) ( ((uint32_t)addr)&(~(PAGE_SIZE-1)) )
 
 #define PAGE_PRESENT    0
 #define PAGE_RW         1
