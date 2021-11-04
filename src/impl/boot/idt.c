@@ -19,7 +19,8 @@ struct idt_ptr
 };
 #pragma pack(0)
 
-struct idt_entry __idt[256];
+
+struct idt_entry __idt[256] __attribute__((aligned (0x10)));
 struct idt_ptr __idt_ptr;
 
 extern void __idt_load();

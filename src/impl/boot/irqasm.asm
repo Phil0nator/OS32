@@ -6,7 +6,7 @@
 %macro DECLIRQ 2
 global __irq %+ %1
 __irq %+ %1:
-    cli
+    ; cli
     %if !(%2)
     push byte 0
     %endif
@@ -38,6 +38,7 @@ pop es
 pop ds
 popa
 add esp, 8 
+sti
 iret
 %endmacro
 
@@ -59,3 +60,5 @@ DECLIRQ 12, 0
 DECLIRQ 13, 0
 DECLIRQ 14, 0
 DECLIRQ 15, 0
+
+DECLIRQ 128, 0

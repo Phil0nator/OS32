@@ -32,9 +32,9 @@ __umode_iret:
     push (5 * 8) | 3
     push edx
     pushf
-    ; pop eax
-    ; or eax, 0x200
-    ; push eax
+    pop eax
+    or eax, 0x200
+    push eax
     push (4 * 8) | 3
     push ebx
     iret

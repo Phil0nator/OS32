@@ -6,7 +6,7 @@
 %macro DECLISR 2
 global __isr %+ %1
 __isr %+ %1:
-    cli
+    ; cli
     %if !(%2)
     push byte 0
     %endif
@@ -38,6 +38,7 @@ pop es
 pop ds
 popa
 add esp, 8 
+sti
 iret
 %endmacro
 

@@ -20,6 +20,7 @@
 #include "drivers/fpu.h"
 #include "system/filesystems/vfs.h"
 #include "tests/elftest.h"
+#include "system/syscalls/syscall_setup.h"
 
 #define __kernel_main_hlt vgaPuts(strerror(errno)); for(;;);
 #define __kernel_main_sti __asm__ __volatile__ ("sti"); 
@@ -119,6 +120,12 @@ void _kernel_main()
         __kernel_main_hlt
     }
     vgaPrintf("%+ vfs\n");
+
+    if (__install_syscalls() == OS32_ERROR)
+    {
+        vgaPrintf("%- syscalls\n");
+    }
+    vgaPrintf("%+ syscalls\n");
     
     idt_update();
 

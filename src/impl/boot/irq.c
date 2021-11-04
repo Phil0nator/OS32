@@ -37,8 +37,9 @@ extern void __irq28();
 extern void __irq29();
 extern void __irq30();
 extern void __irq31();
+extern void __irq128();
 
-static irq_routine irq_routines[16] = {NULL};
+static irq_routine irq_routines[256] = {NULL};
 
 
 err_t irq_install_routine( size_t irqno, irq_routine r )
@@ -98,6 +99,7 @@ err_t __install_irq()
     idt_set_gate( 45, (size_t)__irq13, 0x08, 0x8E );
     idt_set_gate( 46, (size_t)__irq14, 0x08, 0x8E );
     idt_set_gate( 47, (size_t)__irq15, 0x08, 0x8E );
+
     return OS32_SUCCESS;
 
 }

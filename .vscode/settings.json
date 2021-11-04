@@ -15,6 +15,7 @@
         "type_traits": "cpp",
         "elf.h": "c",
         "linitrd.h": "c",
-        "process.h": "c"
+        "process.h": "c",
+        "irq.h": "c"
     }
 }
