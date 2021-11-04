@@ -39,11 +39,11 @@ void unwire_page( page_dir_t* page_directory, const void* virt)
     uint32_t table_idx = converter.ti;
     page_table_t* table = (page_table_t*) page_directory->virtuals[directory_idx];
     if (!table) return;
-    table->pages[table_idx].present = 0;
-    for (size_t i = 0; i < (1024); i++)
-    {
-        if (table->pages[i].present) goto clean_ret;
-    }
+    // table->pages[table_idx].present = 0;
+    // for (size_t i = 0; i < (1024); i++)
+    // {
+    //     if (table->pages[i].present) goto clean_ret;
+    // }
     // kfree( table );
     // page_directory->virtuals[directory_idx] = NULL;
     // page_directory->tables[directory_idx].present = 0;

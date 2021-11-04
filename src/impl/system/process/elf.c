@@ -88,7 +88,7 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
             (page_table_ent_t){.present=1,.rw=1,.user=1} 
         );
         memset( addr, 0, PAGE_SIZE);
-        unwire_page( 
+        elf_unwire_from_dir( 
             &boot_page_directory, 
             addr
         );
@@ -172,6 +172,13 @@ err_t elf_reloc( struct elf_file* elf, Elf32_Rel* reltab, Elf32_Shdr* sh )
     return OS32_SUCCESS;
 }
 
+void elf_unwire_from_dir( page_dir_t* directory, void* addr )
+{
+    uint32_t diridx = (uint32_t)addr >> 22;
+    // directory->tables[diridx].present = 0;
+    // directory->virtuals[diridx] = NULL;
+}
+
 void elf_load_phase_2( struct elf_file* elf, process_t* proc)
 {
     for (size_t i = 0; i < elf->header->e_shnum; i++)
@@ -250,7 +257,7 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                             (char*)last_addr-((char*)sh->sh_addr+i*PAGE_SIZE)
                         );
 
-                    unwire_page( 
+                    elf_unwire_from_dir( 
                         &boot_page_directory, 
                         addr
                     );
