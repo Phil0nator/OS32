@@ -72,15 +72,21 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
     void* page_aligned_shaddr = (void*)PAGE_ALIGNED(sh->sh_addr);
     size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
 
-    kmalloc_alloc_pages( 
-        proc->pdir, 
-        pgs, 
-        page_aligned_shaddr, 
-        perms
-    );
+    // kmalloc_alloc_pages( 
+    //     proc->pdir, 
+    //     pgs, 
+    //     page_aligned_shaddr, 
+    //     perms
+    // );
     for (size_t i = 0; i < pgs; i++)
     {
         void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
+        kmalloc_alloc_pages( 
+            proc->pdir, 
+            1, 
+            addr, 
+            perms
+        );
         wire_page( 
             &boot_page_directory, 
             phys_addr_of( proc->pdir, addr ),
@@ -203,6 +209,8 @@ void elf_load_phase_2( struct elf_file* elf, process_t* proc)
 
 elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
 {
+    if(!elf) return OS32_FAILED;
+    if(!proc) return OS32_FAILED;
     elf_load_phase_1(elf, proc);
     elf_load_phase_2(elf, proc);
 
