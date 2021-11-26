@@ -1,6 +1,7 @@
 #include "boot/tss.h"
 #include "boot/gdt.h"
 #include <stdint.h>
+#include "system/process/process.h"
 
 #define TSS_GDT_ENTRY (3)
 
@@ -19,6 +20,12 @@ err_t __install_tss()
     __tss.esp0 = (uint32_t)usermode_kernel_stack+sizeof(usermode_kernel_stack);
     // setup the correct segment
     __tss.ss0 = 0x10;
+    __tss.ss0 = 0x10;
+    __tss.ss2 = (5*8) | 3;
+    __tss.cs = (1*8) | 3;
+    __tss.ss = __tss.ds = __tss.es = __tss.fs = __tss.gs = 0x13;
+    __tss.esp0 = (uint32_t)KERNEL_STACK_START + STACK_SIZE - 64;
+    __tss.esp2 = (uint32_t)USER_STACK_START + STACK_SIZE - 64;
     // add the tss to the gdt
     gdt_set_gate( TSS_GDT_ENTRY, (uint32_t) &__tss, sizeof(tss_t), 0x89, 0x40  );
     // load tss to internal register
@@ -29,9 +36,8 @@ err_t __install_tss()
 
 
 
-void tss_enter_usermode( void* entrpoint, tss_t* tss )
+void tss_enter_usermode( void* entrypoint, void* stack )
 {
     // defined in asm
-    __tss = *tss;
-    __umode_iret( entrpoint, tss->esp );
+    __umode_iret( entrypoint, stack );
 }

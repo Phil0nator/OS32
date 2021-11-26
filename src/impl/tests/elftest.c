@@ -24,10 +24,11 @@ void __elf_test()
     process_create(&proc);
 
     void (*entry)() = elf_load_for_exec( elf, &proc );
-    process_start(&proc, entry);
-
-    process_destroy(&proc);
     elf_free(elf);
     kfree(data);
     vfs_close(fd);
+    
+    process_start(&proc, entry);
+
+    process_destroy(&proc);
 }

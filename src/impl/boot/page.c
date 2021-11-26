@@ -26,6 +26,10 @@ phys_addr phys_addr_of(page_dir_t* page_directory, const void* virtual_addr )
     // uint32_t directory_idx = ((uint32_t)virtual_addr) >> 22;
     // uint32_t table_idx = ((uint32_t)virtual_addr) >> 12 & 0x03FF;
     page_table_t* table = (page_table_t*) page_directory->virtuals[directory_idx];
+    if (!table)
+    {
+        return NULL;
+    }
     return table->pages[table_idx].frame * PAGE_SIZE;
 }
 
@@ -50,6 +54,36 @@ void unwire_page( page_dir_t* page_directory, const void* virt)
 
     clean_ret:
     __invlpg_flush();
+}
+
+static void clone_table( page_dir_t* dest, size_t index, const page_dir_t* source )
+{
+    phys_addr phys;
+    page_table_t* newpg = kmalloc_page_struct(&phys);
+    memcpy(newpg, source->virtuals[index], sizeof(page_table_t));
+    dest->tables[index] = source->tables[index];
+    dest->tables[index].frame = PAGE_ALIGNED(phys)/PAGE_SIZE;
+    dest->virtuals[index] = newpg;
+}
+
+void dir_dup( page_dir_t* dest, const page_dir_t* src )
+{
+    memset(dest, 0, sizeof(page_dir_t));
+    for (size_t i = 0; i < 1024; i++)
+    {
+        if (src->tables[i].present)
+        {
+            if (boot_page_directory.tables[i].present)
+            {
+                dest->tables[i] = src->tables[i];
+                dest->virtuals[i] = src->virtuals[i];
+            }
+            else
+            {
+                clone_table( dest, i, src );
+            }
+        }
+    }
 }
 
 void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, page_table_ent_t flags )

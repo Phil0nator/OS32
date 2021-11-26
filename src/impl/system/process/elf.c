@@ -175,6 +175,8 @@ err_t elf_reloc( struct elf_file* elf, Elf32_Rel* reltab, Elf32_Shdr* sh )
 void elf_unwire_from_dir( page_dir_t* directory, void* addr )
 {
     uint32_t diridx = (uint32_t)addr >> 22;
+    // directory->tables[diridx].present = false;
+    // directory->virtuals[diridx] = NULL;
     // directory->tables[diridx].present = 0;
     // directory->virtuals[diridx] = NULL;
 }
@@ -225,16 +227,20 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                 void* page_aligned_shaddr = (void*)PAGE_ALIGNED(sh->sh_addr);
                 size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
                 void* last_addr = page_aligned_shaddr+pgs*PAGE_SIZE;
-                kmalloc_alloc_pages( 
-                    proc->pdir, 
-                    pgs, 
-                    page_aligned_shaddr, 
-                    perms
-                );
+
+                // kmalloc_alloc_pages( 
+                //     proc->pdir, 
+                //     pgs, 
+                //     page_aligned_shaddr, 
+                //     perms
+                // );
                 for (size_t i = 0; i < pgs; i++)
                 {
                     void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
-                    
+                    if ( phys_addr_of(proc->pdir, addr) == 0 )
+                    {
+                        kmalloc_alloc_pages( proc->pdir, 1, addr, perms );
+                    }
                     wire_page( 
                         &boot_page_directory, 
                         phys_addr_of( proc->pdir, addr ),

@@ -4,10 +4,13 @@
 #include "system/interrupt_frame.h"
 #include "boot/vga.h"
 #include "boot/irq.h"
+#include "syscall_registry.h"
 extern void __syscall_entry();
 void __syscall_main( interrupt_frame_t* regs )
 {
-    vgaPrintf("Syscall!");
+    vgaPrintf("%+ SYSCALL MADE!");
+    return;
+    __os32_syscall_registry[ regs->eax ]( regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi, regs->ebp );
 }
 
 err_t __install_syscalls()

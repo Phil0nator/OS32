@@ -71,6 +71,9 @@ void unwire_page( page_dir_t* page_directory, const void* virt);
 // DEPRICATED
 const void* next_virt();
 
+// Duplicate an address-space
+void dir_dup( page_dir_t* dest, const page_dir_t* src );
+
 // Set the value held by the cr3 register
 void set_cr3( phys_addr a );
 // Get the value held by the cr3 register

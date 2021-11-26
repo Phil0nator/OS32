@@ -412,6 +412,11 @@ kmalloc_ptr kmalloc( size_t size )
     struct kmalloc_header* h = kmalloc_alloc( size, 1 );
     return ((char*)h)+sizeof(struct kmalloc_header);
 }
+kmalloc_ptr kmalloc_a( size_t size, size_t align )
+{
+    struct kmalloc_header* h = kmalloc_alloc( size, align );
+    return ((char*)h)+sizeof(struct kmalloc_header);
+}
 void kfree( kmalloc_ptr ptr )
 {
     if (!ptr || ptr == bootstrap_page) return;

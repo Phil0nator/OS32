@@ -338,7 +338,7 @@
 
 #define SYSNO(x) SYS_##x
 #define __syscall_str(x) #x
-#define syscall(number) __asm__ __volatile__ ("mov $" __syscall_str(number) ", %eax;" "int $0x80;" )
+#define __syscall(number) __asm__ __volatile__ ("mov $" __syscall_str(number) ", %eax;" "int $0x80;" )
 
 
 #endif

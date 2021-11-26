@@ -42,6 +42,13 @@ kmalloc_ptr kmalloc_page_struct( uint32_t* phys_dest );
  */
 kmalloc_ptr kmalloc( size_t size );
 /**
+ * Allocate a piece of memory of a certain size aligned to a certain boundary.
+ * @param size number of bytes to allocate
+ * @param align the required byte alignment of the new memory
+ * @returns an aligned virtual address pointing to at least 'size' available bytes
+ */
+kmalloc_ptr kmalloc_a( size_t size, size_t align );
+/**
  * free memory returned by kmalloc or friends
  * @param ptr value returned by kmalloc or friends
  * @warning passing NULL as the parameter will cause no error

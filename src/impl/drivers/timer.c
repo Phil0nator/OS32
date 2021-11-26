@@ -1,6 +1,7 @@
 #include "drivers/timer.h"
 #include "boot/irq.h"
 #include "boot/vga.h"
+#include "system/process/multitasking.h"
 
 //http://www.osdever.net/bkerndev/Docs/pit.htm
 
@@ -15,6 +16,7 @@ static volatile pit_ticks_t total_ticks = 0;
 static void timer_routine()
 {
     total_ticks++;
+    __procswitch();
 }
 
 
