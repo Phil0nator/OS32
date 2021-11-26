@@ -1,7 +1,9 @@
+#include "system/process/process.h"
 #include "system/filesystems/vfs.h"
 #include "stdlib/kmalloc.h"
 #include "stdlib/string.h"
 #include "system/filesystems/linitrd.h"
+#include "stdlib/streambuf.h"
 
 #define VFS_ASSERT_FD(fd) if (fd < 0){__set_errno(EBADF);return OS32_ERROR;}
 
@@ -48,6 +50,7 @@ typedef struct fd_entry
             // descriptor provided by the underlying implimentation for that fs
             fd_t underlying_fd;
         } file;
+        streambuf_t sb;
     };
     // cursor
     fd_pos_t pos;
@@ -214,7 +217,19 @@ fd_t vfs_open( const char* fpath, int mode )
     __set_errno( ENOENT );
     return OS32_ERROR;
 }
-size_t vfs_write( fd_t fd, const char* data, size_t bytes );
+size_t vfs_write( fd_t fd, const char* data, size_t bytes )
+{
+    VFS_ASSERT_FD(fd)
+    if (fdt[fd].fdtp == FD_FILE)
+    {
+        // return vfs_write_file( fd, data, bytes );
+    } 
+    else if (fdt[fd].fdtp == FD_STDSTREAM)
+    {
+        return streambuf_write( &fdt[fd].sb, data, bytes );
+    }
+    return OS32_ERROR;
+}
 
 
 size_t vfs_read( fd_t fd, char* dest, size_t bytes )
@@ -225,6 +240,12 @@ size_t vfs_read( fd_t fd, char* dest, size_t bytes )
     if (fdt[fd].fdtp == FD_FILE)
     {
         return vfs_read_file( fd, dest, bytes );
+    }
+    else if (fdt[fd].fdtp == FD_STDSTREAM)
+    {
+        memcpy( dest, fdt[fd].sb.m_buf + fdt[fd].pos.ipos, bytes );
+        fdt[fd].pos.ipos += bytes;
+        return bytes;
     }
     return OS32_ERROR;
 }
@@ -391,5 +412,55 @@ size_t vfs_write_file( fd_t fd, const char* src, size_t bytes )
         bytes,
         fdt[fd].pos.opos
     );
+}
+err_t vfs_setup_proc( struct process* proc )
+{
+    fd_t in, out, err;
+    in = alloc_next_fd();
+    out = alloc_next_fd();
+    err = alloc_next_fd();
+
+    proc->local_fdt[0] = in;
+    proc->local_fdt[1] = out;
+    proc->local_fdt[2] = err;
+
+    fdt[in].present = true;
+    fdt[in].fdtp = FD_STDSTREAM;
+    fdt[in].pos.ipos = 0;
+    fdt[in].pos.opos = 0;
+    streambuf_create( &fdt[in].sb );
+
+    fdt[out].present = true;
+    fdt[out].fdtp = FD_STDSTREAM;
+    fdt[out].pos.ipos = 0;
+    fdt[out].pos.opos = 0;
+    streambuf_create( &fdt[out].sb );
+
+    fdt[err].present = true;
+    fdt[err].fdtp = FD_STDSTREAM;
+    fdt[err].pos.ipos = 0;
+    fdt[err].pos.opos = 0;
+    streambuf_create( &fdt[err].sb );
+    return OS32_SUCCESS;
+}
+
+err_t vfs_clean_proc( struct process* proc )
+{
+    if (!proc) return OS32_ERROR;
+    fd_t in, out, err;
+    in = proc->local_fdt[0];
+    out = proc->local_fdt[1];
+    err = proc->local_fdt[2];
+
+    fdt[in].present = false;
+    fdt[out].present = false;
+    fdt[err].present = false;
+
+    streambuf_destroy( &fdt[in].sb );
+    streambuf_destroy( &fdt[out].sb );
+    streambuf_destroy( &fdt[err].sb );
+
+    return OS32_SUCCESS;
+
 }
 

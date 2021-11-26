@@ -2,6 +2,7 @@
 #include "stdlib/kmalloc.h"
 #include "stdlib/string.h"
 #include "drivers/cr0.h"
+#include "system/filesystems/vfs.h"
 
 
 
@@ -16,11 +17,13 @@ void process_create( process_t* dest )
     dest->eip = 0;
     dest->esp = 0;
     dest->ebp = 0;
-
+    vfs_setup_proc(dest);
 }
 void process_destroy( process_t* proc )
 {
     kfree(proc->pdir);
+    vfs_clean_proc(proc);
+
 }
 void process_start( process_t* proc, void (*entrypoint)() )
 {

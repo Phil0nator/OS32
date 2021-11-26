@@ -2,7 +2,8 @@
     "configurations": [
         {
             "includePath": [
-                "src/include"
+                "src/include",
+                "userlib"
             ],
             "intelliSenseMode": "linux-gcc-x64",
             "compilerPath": "/usr/bin/gcc",

@@ -18,6 +18,9 @@
         "process.h": "c",
         "irq.h": "c",
         "syscall.h": "c",
-        "multitasking.h": "c"
+        "multitasking.h": "c",
+        "vfs.h": "c",
+        "syscall_registry.h": "c",
+        "os32std.h": "c"
     }
 }

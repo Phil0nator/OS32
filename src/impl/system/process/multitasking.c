@@ -3,7 +3,7 @@
 #include "system/process/process.h"
 #include "stdlib/instructions.h"
 #include "stdlib/kmalloc.h"
-
+// https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
 #define DUMMY_SWITCH 0x123
 
 process_t* current_process;
@@ -45,7 +45,7 @@ void __procswitch()
     if (!current_process) current_process = process_list;
     esp = current_process->esp;
     ebp = current_process->ebp;
-    // eip = current_process->eip;
+    eip = current_process->eip;
     asm volatile("         \
      cli;                 \
      mov %0, %%edi;       \
