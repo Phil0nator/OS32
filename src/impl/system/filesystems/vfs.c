@@ -243,7 +243,12 @@ size_t vfs_read( fd_t fd, char* dest, size_t bytes )
     }
     else if (fdt[fd].fdtp == FD_STDSTREAM)
     {
-        memcpy( dest, fdt[fd].sb.m_buf + fdt[fd].pos.ipos, bytes );
+        memcpy
+        ( 
+            dest, 
+            fdt[fd].sb.m_buf + fdt[fd].pos.ipos, 
+            bytes > fdt[fd].sb.m_size ? fdt[fd].sb.m_size : bytes
+        );
         fdt[fd].pos.ipos += bytes;
         return bytes;
     }

@@ -21,6 +21,12 @@
         "multitasking.h": "c",
         "vfs.h": "c",
         "syscall_registry.h": "c",
-        "os32std.h": "c"
+        "os32std.h": "c",
+        "unistd.h": "c",
+        "io.h": "c",
+        "file.h": "c",
+        "exception": "c",
+        "new": "c",
+        "timer.h": "c"
     }
 }

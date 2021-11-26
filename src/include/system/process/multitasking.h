@@ -4,6 +4,7 @@
 #include "process.h"
 
 extern process_t* current_process;
+extern process_t* process_list;
 
 
 err_t __install_multitasking();
@@ -14,6 +15,8 @@ void move_stack(void* destination, size_t size);
 int __getpid();
 
 
+int __spawn(const char* path);
+process_t* get_proc_by_id( pid_t pid );
 
 
 #endif

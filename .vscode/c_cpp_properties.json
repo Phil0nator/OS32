@@ -3,7 +3,7 @@
         {
             "includePath": [
                 "src/include",
-                "userlib"
+                "userlib/include"
             ],
             "intelliSenseMode": "linux-gcc-x64",
             "compilerPath": "/usr/bin/gcc",

@@ -1,6 +1,6 @@
 CC = gcc
 CFLAGS = -g -F dwarf -O0 -m32 -Isrc/include -c -ffreestanding -nostdlib -mno-red-zone -Wall -Wextra
-USERMODEFLAGS = -O0 -m32 -nostdlib -static -ffreestanding -Wall -Wextra
+USERMODEFLAGS = -O0 -m32 -nostdlib -static -ffreestanding -Wall -Wextra -Iuserlib/include
 
 
 ASMSRC := $(shell find src/ -name "*.asm")
@@ -12,6 +12,9 @@ COUT := $(patsubst src/%.c, build/%.o, ${CSRC})
 USRSRC := $(shell find usermode/ -name "*.c")
 USROUT := $(patsubst usermode/%.c, build/bin/%, ${USRSRC})
 
+USERLIB: $(shell find userlib/src/ -name "*.c")
+	cd userlib && $(MAKE) && cd ..
+
 $(ASMOUT): build/%.o : src/%.asm
 	mkdir -p $(dir $@) && \
 	nasm -f elf32 -F dwarf -g $(patsubst build/%.o, src/%.asm, $@) -o $@
@@ -20,9 +23,9 @@ $(COUT): build/%.o : src/%.c
 	mkdir -p $(dir $@) && \
 	${CC} ${CFLAGS} $(patsubst build/%.o, src/%.c, $@) -o $@
 
-$(USROUT): build/bin/% : usermode/%.c
+$(USROUT): build/bin/% : usermode/%.c USERLIB
 	mkdir -p $(dir $@) && \
-	${CC} ${USERMODEFLAGS} ${patsubst build/bin/%, usermode/%.c, $@} -o $@
+	${CC} userlib/build/userlib.a ${USERMODEFLAGS} ${patsubst build/bin/%, usermode/%.c, $@} -o $@
 
 OS32: $(COUT) $(ASMOUT) $(USROUT)
 	mkdir -p dist/x86 && \
