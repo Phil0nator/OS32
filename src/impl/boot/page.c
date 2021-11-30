@@ -13,7 +13,15 @@ typedef struct va_conv
 } va_conv_t;
 #pragma pack(0)
 
+// Set the value held by the cr3 register
+extern void set_cr3( phys_addr a );
+// Get the value held by the cr3 register
+extern phys_addr get_cr3();
+
+extern void cpy_phys_pgs( phys_addr d, phys_addr s );
+
 extern page_dir_t boot_page_directory;
+page_dir_t* current_page_directory = &boot_page_directory;
 
 phys_addr phys_addr_of(page_dir_t* page_directory, const void* virtual_addr )
 {
@@ -53,7 +61,7 @@ void unwire_page( page_dir_t* page_directory, const void* virt)
     // page_directory->tables[directory_idx].present = 0;
 
     clean_ret:
-    __invlpg_flush();
+    flushcr3();
 }
 
 static void clone_table( page_dir_t* dest, size_t index, const page_dir_t* source )
@@ -64,11 +72,37 @@ static void clone_table( page_dir_t* dest, size_t index, const page_dir_t* sourc
     dest->tables[index] = source->tables[index];
     dest->tables[index].frame = PAGE_ALIGNED(phys)/PAGE_SIZE;
     dest->virtuals[index] = newpg;
+
+    for (size_t i = 0; i < 1024; i ++)
+    {
+        page_table_t* srct = ((page_table_t*)source->virtuals[index]);
+        if (srct->pages[i].present)
+        {
+            va_conv_t cv;
+            cv.di = index;
+            cv.ti = i;
+            cv.off = 0;
+            void* virt = *(void**)(&cv);
+            page_dir_ent_t perms = srct->pages[i];
+            kmalloc_alloc_pages( dest, 1, virt, (page_table_ent_t){ 
+                .present = perms.present,  
+                .rw = perms.rw,
+                .user = perms.user,
+                .accessed = perms.accessed
+                } );
+            
+            phys_addr phys_dest, phys_src;
+            phys_dest = newpg->pages[i].frame;
+            phys_src = srct->pages[i].frame;
+
+            cpy_phys_pgs( phys_dest, phys_src );
+
+        }
+    }
 }
 
 void dir_dup( page_dir_t* dest, const page_dir_t* src )
 {
-    memset(dest, 0, sizeof(page_dir_t));
     for (size_t i = 0; i < 1024; i++)
     {
         if (src->tables[i].present)
@@ -129,8 +163,30 @@ void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, pa
     set_cr3(get_cr3());
 }
 
-const void* next_virt()
+
+
+page_dir_t* set_pd( page_dir_t* pd )
 {
-    //https://compas.cs.stonybrook.edu/~nhonarmand/courses/fa17/cse306/slides/07-x86_vm.pdf
-    return NULL;
+    page_dir_t* old = current_page_directory;
+    current_page_directory = pd;
+    set_cr3(current_page_directory->phys);
+    return old;
+}
+page_dir_t* get_pd(  )
+{
+    return current_page_directory;
+}
+
+page_dir_t* mkpd( page_dir_t* parent )
+{
+    page_dir_t* out = kmalloc_a( sizeof(page_dir_t), PAGE_SIZE );
+    memset(out, 0, sizeof(page_dir_t));
+    out->phys = phys_addr_of( current_page_directory, out );
+    dir_dup( out, parent ? parent : current_page_directory );
+    return out;
+}
+
+void flushcr3()
+{
+    set_cr3(get_cr3());
 }

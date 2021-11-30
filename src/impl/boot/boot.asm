@@ -39,6 +39,7 @@ dd 0x01000083
 dd 0x01400083
 times (1024-768) dd 0
 times (1024) dd 0
+dd boot_page_directory - ADDROFF ; physical adrress
 
 section .text
 extern _kernel_start

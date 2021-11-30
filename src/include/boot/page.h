@@ -54,11 +54,13 @@ typedef struct page_dir
 {
     page_dir_ent_t tables[1024];
     void* virtuals[1024];
+    phys_addr phys;
 } page_dir_t;
 
 #pragma pack(0)
 
 extern page_dir_t boot_page_directory;
+extern page_dir_t* current_page_directory;
 
 // Convert a valid virtual address to a physical address
 phys_addr phys_addr_of(page_dir_t* page_directory, const void* virtual_addr );
@@ -74,11 +76,13 @@ const void* next_virt();
 // Duplicate an address-space
 void dir_dup( page_dir_t* dest, const page_dir_t* src );
 
-// Set the value held by the cr3 register
-void set_cr3( phys_addr a );
-// Get the value held by the cr3 register
-phys_addr get_cr3();
+
 // flush paging system (update)
-extern void __invlpg_flush();
+// extern void __invlpg_flush();
+void flushcr3();
+page_dir_t* set_pd( page_dir_t* pd );
+page_dir_t* get_pd(  );
+
+page_dir_t* mkpd( page_dir_t* parent );
 
 #endif

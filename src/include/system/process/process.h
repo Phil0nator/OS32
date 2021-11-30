@@ -21,7 +21,6 @@ typedef struct process
     tid_t tid;
 
     page_dir_t* pdir;
-    phys_addr pdir_phys;
     uint32_t esp, ebp, eip;
     fd_t local_fdt[128];
 

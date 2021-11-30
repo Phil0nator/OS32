@@ -343,7 +343,7 @@ void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual
         wire_page(page_directory, phys, virt, perms );
     }
     // flush cpu paging system
-    set_cr3(get_cr3());
+    flushcr3();    
 }
 
 // reserve a set of pages
@@ -364,6 +364,8 @@ err_t __install_kmalloc()
     phys_begin = KERNEL_PHYS_END;
     phys_alloc_ptr = phys_begin;
     phys_end = phys_begin+__multiboot_info.mem_upper*1000;
+
+    boot_page_directory.phys = ((char*)&boot_page_directory) - 0xc0000000;
 
     // reserve the first chunk of physical memory for:
     // - reserved low space (BIOS, etc...)

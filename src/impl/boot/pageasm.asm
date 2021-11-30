@@ -26,3 +26,36 @@ get_cr3:
 __invlpg_flush:
     invlpg [0]
     ret
+
+
+
+; https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
+global cpy_phys_pgs
+cpy_phys_pgs:
+
+    push ebx
+    cli
+    mov edi, [ebp+8]
+    mov esi, [ebp+12]
+
+    mov edx, cr0
+    and edx, 0x7fffffff
+    mov cr0, edx
+
+    mov ecx, 1024
+
+    .lp:
+
+        mov eax, [esi]
+        mov [edi], eax
+        add edi, 4
+        add esi, 4
+        loop .lp
+
+    mov edx, cr0
+    and edx, 0x80000000
+    mov cr0, edx
+
+    popf
+    pop ebx
+    ret

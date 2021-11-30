@@ -82,7 +82,7 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
     {
         void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
         kmalloc_alloc_pages( 
-            &boot_page_directory, 
+            current_page_directory, 
             1, 
             addr, 
             perms
@@ -94,10 +94,6 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
         //     (page_table_ent_t){.present=1,.rw=1,.user=1} 
         // );
         memset( addr, 0, PAGE_SIZE);
-        elf_unwire_from_dir( 
-            &boot_page_directory, 
-            addr
-        );
     }
 }
 
@@ -211,6 +207,9 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
 {
     if(!elf) return OS32_FAILED;
     if(!proc) return OS32_FAILED;
+    
+    page_dir_t* oldpdir = set_pd( proc->pdir );
+    
     elf_load_phase_1(elf, proc);
     elf_load_phase_2(elf, proc);
 
@@ -245,16 +244,16 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                 for (size_t i = 0; i < pgs; i++)
                 {
                     void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
-                    if ( phys_addr_of(proc->pdir, addr) == 0 )
+                    if ( phys_addr_of( current_page_directory, addr) == 0 )
                     {
-                        kmalloc_alloc_pages( proc->pdir, 1, addr, perms );
+                        kmalloc_alloc_pages( current_page_directory, 1, addr, perms );
                     }
-                    wire_page( 
-                        &boot_page_directory, 
-                        phys_addr_of( proc->pdir, addr ),
-                        addr,
-                        (page_table_ent_t){.present=1,.rw=1, .user=1} 
-                    );
+                    // wire_page( 
+                    //     &boot_page_directory, 
+                    //     phys_addr_of( proc->pdir, addr ),
+                    //     addr,
+                    //     (page_table_ent_t){.present=1,.rw=1, .user=1} 
+                    // );
                     // memset( addr, 0, PAGE_SIZE);
                     if ( i != pgs-1 )
                         memcpy
@@ -271,16 +270,16 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                             (char*)last_addr-((char*)sh->sh_addr+i*PAGE_SIZE)
                         );
 
-                    elf_unwire_from_dir( 
-                        &boot_page_directory, 
-                        addr
-                    );
+                    // elf_unwire_from_dir( 
+                    //     &boot_page_directory, 
+                    //     addr
+                    // );
                 }
             }
             break;
         }
     }
-
+    set_pd(oldpdir);
     return (elf_fn) elf->header->e_entry;
 }
 elf_fn elf_get_sym( struct elf_file* elf, const char* symbol )

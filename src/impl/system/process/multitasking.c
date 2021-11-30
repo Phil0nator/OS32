@@ -11,6 +11,13 @@ process_t* current_process;
 process_t* process_list;
 pid_t next_pid = 1;
 
+
+void move_stack( void* dest, size_t size )
+{
+    kmalloc_alloc_pages( current_page_directory, size/PAGE_SIZE, dest, (page_table_ent_t){ .present=1, .rw=1, .user=0 } );
+    
+}
+
 err_t __install_multitasking()
 {
     __cli
@@ -23,6 +30,9 @@ err_t __install_multitasking()
     __get_ebp(ebp);
     current_process->esp = esp;
     current_process->ebp = ebp;
+
+    move_stack( 0xf0000000, 16384 );
+
     __sti
     return OS32_SUCCESS;
 }
@@ -47,6 +57,7 @@ void __procswitch()
     esp = current_process->esp;
     ebp = current_process->ebp;
     eip = current_process->eip;
+    set_pd(current_process->pdir);
     asm volatile("         \
      cli;                 \
      mov %0, %%edi;       \
