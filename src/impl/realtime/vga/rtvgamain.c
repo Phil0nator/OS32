@@ -17,11 +17,13 @@ void rtvgamain()
 {
 
     pid_t pid = __spawn("/initrd/bin/test");
-    proc = get_proc_by_id(pid);
+    while((proc = get_proc_by_id(pid)) == OS32_FAILED);
     while (proc->eip > 0xc0000000)
     {
         pit_waitt( 5 );
     }
+
+    for(;;);
     // memset(testerchar, 205, 80 );
     rtvga_cls( VGA_BLACK );
     while(1)

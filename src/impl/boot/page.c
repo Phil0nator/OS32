@@ -96,7 +96,8 @@ void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, pa
     uint32_t directory_idx = converter.di;
     uint32_t table_idx = converter.ti;
     
-    
+    vga_assert(table_idx <= 1024);
+    vga_assert(directory_idx <= 1024);
 
     page_table_t* table = (page_table_t*) page_directory->virtuals[directory_idx];
     if (!table)
@@ -106,14 +107,10 @@ void wire_page( page_dir_t* page_directory, phys_addr phys, const void* virt, pa
         memset(table, 0, PAGE_SIZE);
         page_directory->tables[directory_idx].frame = PAGE_ALIGNED(tphys)/PAGE_SIZE;
         
-        // *(uint32_t*)&page_directory->tables[directory_idx] = tphys;
+        // *(uint32_t*)&page_directory->tables[directory_idx] = PAGE_ALIGNED(tphys)/PAGE_SIZE;
         page_directory->tables[directory_idx].present = 1;
         page_directory->tables[directory_idx].rw = 1;
         page_directory->tables[directory_idx].user = flags.user;
-        // *(uint32_t*)&page_directory.tables[directory_idx] |= 3;
-        // PAGE_SET_ADDR( page_directory.tables[directory_idx], tphys );
-        // PAGE_SET_BIT(page_directory.tables[directory_idx], PAGE_PRESENT, 1);
-        // PAGE_SET_BIT(page_directory.tables[directory_idx], PAGE_RW, 1);
         page_directory->virtuals[directory_idx] = table;
     }
     page_dir_ent_t* te = &table->pages[table_idx];

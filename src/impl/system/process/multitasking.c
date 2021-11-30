@@ -43,16 +43,7 @@ void __procswitch()
     current_process->ebp = ebp;
     current_process->eip = eip;
     current_process = current_process->next;
-    __check_proc:
-    if (!current_process) current_process = process_list;
-    if (current_process->eip == 0)
-    {
-        __cli
-        kfree(current_process);
-        current_process = current_process->next;
-        __sti
-        goto __check_proc;
-    }
+    if (!current_process) current_process = process_list;    
     esp = current_process->esp;
     ebp = current_process->ebp;
     eip = current_process->eip;
@@ -86,11 +77,10 @@ int __fork()
     newproc->pid = next_pid++;
     dir_dup( newproc->pdir, parent->pdir );
     push_proc(newproc);
-
     uint32_t eip = __get_eip();
     
 
-    if (current_process != parent)
+    if (current_process == parent)
     {
         uint32_t ebp, esp;
         __get_esp(esp);
@@ -116,7 +106,7 @@ int __getpid()
 int __spawn(const char* path)
 {
     pid_t pid = 0;
-    if (!(pid = __fork()))
+    if ((__fork() == 0))
     {
         fd_t fd = vfs_open( path, 0);
         if (fd < 0)

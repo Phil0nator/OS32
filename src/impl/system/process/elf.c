@@ -82,17 +82,17 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
     {
         void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
         kmalloc_alloc_pages( 
-            proc->pdir, 
+            &boot_page_directory, 
             1, 
             addr, 
             perms
         );
-        wire_page( 
-            &boot_page_directory, 
-            phys_addr_of( proc->pdir, addr ),
-            addr,
-            (page_table_ent_t){.present=1,.rw=1,.user=1} 
-        );
+        // wire_page( 
+        //     &boot_page_directory, 
+        //     phys_addr_of( proc->pdir, addr ),
+        //     addr,
+        //     (page_table_ent_t){.present=1,.rw=1,.user=1} 
+        // );
         memset( addr, 0, PAGE_SIZE);
         elf_unwire_from_dir( 
             &boot_page_directory, 
