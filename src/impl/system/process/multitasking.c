@@ -4,18 +4,37 @@
 #include "stdlib/instructions.h"
 #include "stdlib/kmalloc.h"
 #include "system/filesystems/vfs.h"
+#include "stdlib/string.h"
 // https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
 #define DUMMY_SWITCH 0x123
 
-process_t* current_process;
-process_t* process_list;
+volatile process_t* current_process;
+volatile process_t* process_list;
 pid_t next_pid = 1;
 
+extern void* __bootstack_top;
 
 void move_stack( void* dest, size_t size )
 {
-    kmalloc_alloc_pages( current_page_directory, size/PAGE_SIZE, dest, (page_table_ent_t){ .present=1, .rw=1, .user=0 } );
-    
+    kmalloc_alloc_pages( current_page_directory, size/PAGE_SIZE, dest-size, (page_table_ent_t){ .present=1, .rw=1, .user=0 } );
+    uint32_t old_esp, old_ebp;
+    uint32_t old_top = (uint32_t)&__bootstack_top;
+    __get_esp(old_esp);
+    __get_ebp(old_ebp);
+    uint32_t offset = dest-old_top;
+    uint32_t new_esp, new_ebp;
+    new_esp = old_esp + offset;
+    new_ebp = old_ebp + offset;
+    memcpy( new_esp, old_esp, old_top - old_esp  );
+    for (uint32_t* i = (uint32_t*)((uint32_t)dest-4); i > ((uint32_t)new_esp); i--)
+    {
+        if ( *i > old_esp && *i < old_top )
+        {
+            *i += offset;
+        }
+    }
+    __set_esp(new_esp);
+    __set_ebp(new_ebp);
 }
 
 err_t __install_multitasking()
@@ -30,8 +49,10 @@ err_t __install_multitasking()
     __get_ebp(ebp);
     current_process->esp = esp;
     current_process->ebp = ebp;
-
+    
+    set_pd(current_process->pdir);    
     move_stack( 0xf0000000, 16384 );
+    
 
     __sti
     return OS32_SUCCESS;
@@ -57,16 +78,19 @@ void __procswitch()
     esp = current_process->esp;
     ebp = current_process->ebp;
     eip = current_process->eip;
-    set_pd(current_process->pdir);
+    outportb(0x20, 0x20);
+
+    // set_pd(current_process->pdir);
     asm volatile("         \
      cli;                 \
      mov %0, %%edi;       \
      mov %1, %%esp;       \
      mov %2, %%ebp;       \
+     mov %3, %%cr3;       \
      mov $0x123, %%eax; \
      sti;                 \
      jmp *%%edi           "
-                : : "r"(eip), "r"(esp), "r"(ebp));
+                : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_process->pdir->phys));
 }
 static void push_proc( process_t* proc )
 {
@@ -79,18 +103,8 @@ static void push_proc( process_t* proc )
     ptr->next = proc;
 }
 
-int __fork()
+int __fork_sub(volatile process_t* parent, volatile process_t* newproc, uint32_t eip)
 {
-    __cli
-    process_t* parent = current_process;
-    process_t* newproc = kmalloc( sizeof(process_t) );
-    process_create( newproc );
-    newproc->pid = next_pid++;
-    dir_dup( newproc->pdir, parent->pdir );
-    push_proc(newproc);
-    uint32_t eip = __get_eip();
-    
-
     if (current_process == parent)
     {
         uint32_t ebp, esp;
@@ -104,9 +118,24 @@ int __fork()
     }
     else
     {
-        __sti
         return 0;
     }
+}
+
+int __fork()
+{
+    __cli
+    volatile process_t* parent = current_process;
+    volatile process_t* newproc = kmalloc( sizeof(process_t) );
+    volatile uint32_t eip;
+    process_create( newproc );
+    newproc->pid = next_pid++;
+    push_proc(newproc);
+    dir_dup( newproc->pdir, parent->pdir );
+    OS32_MAKEINSTR("nop;nop;nop;");
+    eip = __get_eip();
+    return __fork_sub(parent, newproc, eip);
+    
 }
 
 int __getpid()
@@ -117,7 +146,7 @@ int __getpid()
 int __spawn(const char* path)
 {
     pid_t pid = 0;
-    if ((__fork() == 0))
+    if ((pid = __fork()) == 0)
     {
         fd_t fd = vfs_open( path, 0);
         if (fd < 0)

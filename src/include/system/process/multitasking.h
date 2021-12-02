@@ -3,8 +3,8 @@
 #include <stddef.h>
 #include "process.h"
 
-extern process_t* current_process;
-extern process_t* process_list;
+extern volatile process_t* current_process;
+extern volatile process_t* process_list;
 
 
 err_t __install_multitasking();

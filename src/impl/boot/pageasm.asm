@@ -31,16 +31,19 @@ __invlpg_flush:
 
 ; https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
 global cpy_phys_pgs
+extern __get_eip
 cpy_phys_pgs:
 
-    push ebx
     cli
-    mov edi, [ebp+8]
-    mov esi, [ebp+12]
+    mov edi, [ebp+4]
+    mov esi, [ebp+8]
+    pushf
 
-    mov edx, cr0
-    and edx, 0x7fffffff
-    mov cr0, edx
+    mov edx, cr3
+    xor eax, eax
+    mov cr3, eax
+    jmp (.not_paged - 0xc0000000)
+    .not_paged:
 
     mov ecx, 1024
 
@@ -57,5 +60,4 @@ cpy_phys_pgs:
     mov cr0, edx
 
     popf
-    pop ebx
     ret

@@ -23,12 +23,12 @@ static void timer_routine()
 
 void pit_waitt( pit_ticks_t ticks )
 {
-    pit_ticks_t final_ticks = total_ticks+ticks;
+    volatile pit_ticks_t final_ticks = total_ticks+ticks;
     while ( total_ticks < final_ticks );
 }
 void pit_waits( pit_secs_t seconds )
 {
-    pit_ticks_t start = total_ticks;
+    volatile pit_ticks_t start = total_ticks;
     while ( (total_ticks-start)/PIT_TPS < seconds );
 }
 pit_ticks_t pit_ticks()

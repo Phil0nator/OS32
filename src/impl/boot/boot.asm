@@ -15,9 +15,10 @@ dd MBFLAGS
 dd CHECKSUM
 
 section .bootstrap_stack, NOBITS
+global __bootstack_top
 stack_bottom: 
 resb 16384
-stack_top:
+__bootstack_top:
 
 section .data
 align 4096
@@ -76,7 +77,7 @@ _boot_paged:
 
     ; move to C code
     ; see kernel_main.c
-    mov esp, stack_top
+    mov esp, __bootstack_top
     call _kernel_main
 
     ; This should never be reached

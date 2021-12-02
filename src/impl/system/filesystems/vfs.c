@@ -243,14 +243,17 @@ size_t vfs_read( fd_t fd, char* dest, size_t bytes )
     }
     else if (fdt[fd].fdtp == FD_STDSTREAM)
     {
-        memcpy
-        ( 
-            dest, 
-            fdt[fd].sb.m_buf + fdt[fd].pos.ipos, 
-            bytes > fdt[fd].sb.m_size ? fdt[fd].sb.m_size : bytes
-        );
-        fdt[fd].pos.ipos += bytes;
-        return bytes;
+        size_t actual_bytes = (bytes > fdt[fd].sb.m_size ? fdt[fd].sb.m_size : bytes);
+        // memcpy
+        // ( 
+        //     dest, 
+        //     fdt[fd].sb.m_buf + fdt[fd].pos.ipos, 
+        //     actual_bytes
+        // );
+        // fdt[fd].pos.ipos += actual_bytes;
+        // fdt[fd].
+        streambuf_read( &fdt[fd].sb, dest, actual_bytes, SBRD_CONSUME );
+        return actual_bytes;
     }
     return OS32_ERROR;
 }

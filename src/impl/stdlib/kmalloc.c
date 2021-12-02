@@ -240,13 +240,13 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
             ptr->size >= size && 
             (
                 // Pointer is aligned correctly
-                ((uint32_t)ptr % align == 0) || 
+                (((uint32_t)ptr+sizeof(struct kmalloc_header)) % align == 0) || 
                 // OR, pointer can be aligned correctly via a split
-                (ptr->size - (align-(uint32_t)ptr % align) >= size+sizeof(struct kmalloc_header))
+                (ptr->size - (align-((uint32_t)ptr+sizeof(struct kmalloc_header)) % align) >= size+sizeof(struct kmalloc_header))
             )
         )
         {
-            if (((uint32_t)ptr % align == 0))
+            if ((((uint32_t)ptr+sizeof(struct kmalloc_header)) % align == 0))
             {
                 // slice off exactly the requested amount of memory
                 kmalloc_split( ptr, size );
@@ -256,8 +256,13 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
             }
             else
             {   
-                struct kmalloc_header* alignedptr = (struct kmalloc_header*) ( (char*)ptr + (align-(uint32_t)ptr % align) - sizeof(struct kmalloc_header));
+                // struct kmalloc_header* alignedptr = (struct kmalloc_header*) ( (char*)ptr + (align-(uint32_t)ptr % align) - sizeof(struct kmalloc_header));
+                struct kmalloc_header* alignedptr = (((uint32_t)ptr + sizeof(struct kmalloc_header) + align-1)/align)*align - sizeof(struct kmalloc_header);
                 size_t total_size = ptr->size;
+                if (PAGE_ALIGNED((uint32_t)alignedptr+12) != alignedptr+1)
+                {
+                    vga_assert(false);
+                }
                 ptr->size = (char*)alignedptr-((char*)ptr + sizeof(struct kmalloc_header));
                 alignedptr->size = total_size-ptr->size-sizeof(struct kmalloc_header);
                 alignedptr->next = NULL;
@@ -366,6 +371,8 @@ err_t __install_kmalloc()
     phys_end = phys_begin+__multiboot_info.mem_upper*1000;
 
     boot_page_directory.phys = ((char*)&boot_page_directory) - 0xc0000000;
+
+    memset(&boot_page_directory, 0, sizeof(void*)*6);
 
     // reserve the first chunk of physical memory for:
     // - reserved low space (BIOS, etc...)

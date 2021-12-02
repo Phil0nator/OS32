@@ -27,6 +27,7 @@
         "file.h": "c",
         "exception": "c",
         "new": "c",
-        "timer.h": "c"
+        "timer.h": "c",
+        "string.h": "c"
     }
 }

@@ -4,10 +4,11 @@
 #define __hlt OS32_MAKEINSTR("hlt")
 #define __sti OS32_MAKEINSTR("sti")
 #define __cli OS32_MAKEINSTR("cli") 
-#define __get_esp(dest) __asm__ __volatile__ ( "mov %%esp, %0" : "=r"(dest) ) 
-#define __get_ebp(dest) __asm__ __volatile__ ( "mov %%ebp, %0" : "=r"(dest) ) 
-
-
+#define __get_esp(dest) asm volatile ( "mov %%esp, %0" : "=r"(dest) ) 
+#define __get_ebp(dest) asm volatile ( "mov %%ebp, %0" : "=r"(dest) ) 
+#define __set_esp(src) asm volatile ( "mov %0, %%esp" : : "r" (src) )
+#define __set_ebp(src) asm volatile ( "mov %0, %%ebp" : : "r" (src) )
+#define __flush_regs(x) asm volatile ("" ::: "%eax", "%ebx", "%ecx", "%edx", "%edi", "%esi")
 uint32_t __get_eip();
 
 

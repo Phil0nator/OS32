@@ -5,7 +5,7 @@
 #include "stdlib/format.h"
 
 
-char rtvga_topbar[VGA_WIDTH];
+char rtvga_topbar[VGA_WIDTH+1] = {0};
 
 
 void rtvga_topbar_flip()
@@ -36,7 +36,7 @@ void rtvga_topbar_flip()
     memset( rtvga_topbar, ' ', VGA_WIDTH );
     memset( rtvga_topbar, '<', 2 );
     memset( rtvga_topbar+VGA_WIDTH-2, '>', 2 );
-    memcpy( (rtvga_topbar+VGA_WIDTH/2)-(strlen(date)/2), date, 12 );
+    memcpy( (rtvga_topbar+VGA_WIDTH/2)-((strlen(date))/2), date, 11 );
     
 
     if (!memequ( prev_topbar, rtvga_topbar, VGA_WIDTH ))
