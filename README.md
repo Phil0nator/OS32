@@ -23,13 +23,14 @@ This is a 32bit x86 hobby kernel I have been putting together with help from [os
 - [ OK ] FPU setup
 - [ OK ] INITRD loading
 - [ OK ] basic ext2 read-only operations
+- [ OK ] Usermode programs / ELF loading
+- [ OK ] syscalls
+- [ OK ] Multitasking
 
 ## Still WIP
 - [...] ext2 write implimentation
 - [...] full vfs implimentation
-- [...] Usermode programs / ELF loading
-- [...] syscalls
-- [...] Multiprocessing
+- [...] keyboard input
 - [...] Terminal emulation / ANSI escape codes
 - [...] Networking
 - [...] ...

@@ -145,7 +145,8 @@ void _kernel_main()
 
     // enter desktop mode:
     vgaPrintf("%+ Entering desktop mode...\n");
-    pit_waits(1);
+    // pit_waits(1);
+    kmalloc_defrag();
     rtmain();
 
 

@@ -6,6 +6,12 @@
 extern volatile process_t* current_process;
 extern volatile process_t* process_list;
 
+typedef void (*multitasking_newproc_subroutine)(pid_t pid);
+
+
+multitasking_newproc_subroutine 
+register_on_newproc_subroutine(multitasking_newproc_subroutine newsub);
+
 
 err_t __install_multitasking();
 

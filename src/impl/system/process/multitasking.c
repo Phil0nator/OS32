@@ -5,12 +5,23 @@
 #include "stdlib/kmalloc.h"
 #include "system/filesystems/vfs.h"
 #include "stdlib/string.h"
+#include "system/process/elf.h"
 // https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
 #define DUMMY_SWITCH 0x123
 
 volatile process_t* current_process;
 volatile process_t* process_list;
 pid_t next_pid = 1;
+
+multitasking_newproc_subroutine on_new_sub = NULL;
+
+multitasking_newproc_subroutine 
+register_on_newproc_subroutine(multitasking_newproc_subroutine newsub)
+{
+    multitasking_newproc_subroutine old = on_new_sub;
+    on_new_sub = newsub;
+    return old;
+}
 
 extern void* __bootstack_top;
 
@@ -94,6 +105,7 @@ void __procswitch()
 }
 static void push_proc( process_t* proc )
 {
+    
     process_t* ptr = process_list;
     if (!ptr) process_list = proc;
     while (ptr->next)
@@ -101,6 +113,10 @@ static void push_proc( process_t* proc )
         ptr = ptr->next;
     }
     ptr->next = proc;
+    if (on_new_sub)
+    {
+        on_new_sub(proc->pid);
+    }
 }
 
 int __fork_sub(volatile process_t* parent, volatile process_t* newproc, uint32_t eip)

@@ -500,7 +500,7 @@ struct kmalloc_header* kmalloc_header_index( size_t idx )
     while (it && idx)
     {
         idx--;
-        if (kmalloc_heap_last == it) break;
+        if (kmalloc_heap_last == it) return 0;
         it = it->next;
     }
     return it;

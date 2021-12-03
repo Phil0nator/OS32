@@ -5,6 +5,7 @@ extern __syscall_main
 global __syscall_entry
 
 __syscall_entry:
+    cli
     pusha
     push ds
     push es

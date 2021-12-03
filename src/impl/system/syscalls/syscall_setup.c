@@ -8,7 +8,7 @@
 extern void __syscall_entry();
 void __syscall_main( interrupt_frame_t* regs )
 {
-    vgaPrintf("%+ SYSCALL MADE!");
+    // vgaPrintf("%+ SYSCALL MADE!");
     // return;
     __os32_syscall_registry[ regs->eax ]( regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi, regs->ebp );
 }

@@ -39,7 +39,7 @@ static void VGAUpdateCursor()
 {
     // http://www.osdever.net/bkerndev/Docs/whatsleft.htm
 
-    uint16_t idx = cursor.x + cursor.y*VGA_WIDTH;
+    uint32_t idx = cursor.x + cursor.y*VGA_WIDTH;
 
     outportb( CRT_CONTROL_REGISTER_PORTNO_A, VGA_CURSOR_CRTINDEX_A );
     outportb( CRT_CONTROL_REGISTER_PORTNO_B, idx >> 8 );

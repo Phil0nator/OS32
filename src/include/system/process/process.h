@@ -23,6 +23,8 @@ typedef struct process
     page_dir_t* pdir;
     uint32_t esp, ebp, eip;
     fd_t local_fdt[128];
+    char wd[VFS_MAX_PATH];
+    uid_t uid;
 
     struct process* next;
 

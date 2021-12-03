@@ -20,7 +20,7 @@ typedef struct temu
 } temu_t;
 
 void temu_create( temu_t* t );
-err_t temu_readfromsb( temu_t* t, streambuf_t* sb );
+err_t temu_readfromsb( temu_t* t, streambuf_t* sb, bool consume );
 err_t temu_readfroms( temu_t* t, const char* str );
 err_t temu_apply( temu_t* t );
 void temu_destroy( temu_t* t );

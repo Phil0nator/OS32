@@ -28,6 +28,7 @@
         "exception": "c",
         "new": "c",
         "timer.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "termproc.h": "c"
     }
 }

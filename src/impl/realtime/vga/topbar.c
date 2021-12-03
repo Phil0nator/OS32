@@ -10,6 +10,8 @@ char rtvga_topbar[VGA_WIDTH+1] = {0};
 
 void rtvga_topbar_flip()
 {
+    int cx, cy;
+    vgaGetCursor(&cx, &cy);
     rtc_timepoint_t tm;
     char prev_topbar[VGA_WIDTH];
     memcpy(prev_topbar, rtvga_topbar, VGA_WIDTH);
@@ -45,6 +47,9 @@ void rtvga_topbar_flip()
         vgaSetFg( VGA_WHITE );
         vgaSetCursor(0,0);
         vgaPuts( rtvga_topbar );
+        vgaSetCol( VGA_WHITE, VGA_BLACK );
+        vgaSetCursor( cx, cy );
     }
+
 
 }

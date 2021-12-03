@@ -361,7 +361,7 @@ uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* na
             // get the name of the dirent
             char* cur_name = ((char*)head)+sizeof(ext2_dirent_head_t);
             // if the name matches the requested name,
-            if (memequ(cur_name, name, head->size - sizeof(ext2_dirent_head_t)))
+            if (memequ(cur_name, name, head->namelen8))
             {
                 // return the inode number
                 return head->inode;
