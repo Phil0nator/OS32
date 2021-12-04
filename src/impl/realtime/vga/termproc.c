@@ -44,6 +44,6 @@ void termproc_display( rtvga_termproc_t* tp )
 {
     temu_readfromsb( &tp->te, &tp->m_stdout, true );
     temu_readfromsb( &tp->te, &tp->m_stderr, true );
-    temu_readfromsb( &tp->te, &tp->m_stdin, false );
+    temu_readfromsb( &tp->te, &tp->m_stdin, true );
     temu_apply( &tp->te );
 }

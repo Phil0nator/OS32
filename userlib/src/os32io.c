@@ -4,7 +4,7 @@
 
 void puts( const char* str )
 {
-    write( STDOUT_FILENO, str, strlen(str) );
+    write( STDOUT_FILENO, str, strlen(str)-1 );
 }
 
 void putc( char c )

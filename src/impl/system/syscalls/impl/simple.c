@@ -1,6 +1,7 @@
 #include "impl.h"
 #include "system/filesystems/vfs.h"
 #include "system/process/multitasking.h"
+#include "stdlib/string.h"
 
 int __s_read( int fd, void* buf, size_t count )
 {
@@ -9,4 +10,11 @@ int __s_read( int fd, void* buf, size_t count )
 int __s_write( int fd, void* buf, size_t count )
 {
     return vfs_write( current_process->local_fdt[fd], buf, count );
+}
+
+int __s_getcwd( char* buf, size_t len )
+{
+    int actual_len = strlen(current_process->wd);
+    memcpy( buf, current_process->wd, actual_len > len ? len : actual_len );
+    return actual_len;
 }

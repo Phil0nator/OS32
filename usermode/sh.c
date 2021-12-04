@@ -7,9 +7,13 @@
 
 int _start(int argc, char const *argv[])
 {
+    // char cwd[PATH_MAX];
+    // getcwd(cwd, PATH_MAX);
     while(true)
     {
-        puts("root@os32:/$");
+        puts("root@os32:/$ ");
+        // puts(cwd);
+        // puts("$");
         for(;;);
     }
     return 0;

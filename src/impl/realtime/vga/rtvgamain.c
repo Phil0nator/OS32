@@ -8,16 +8,22 @@
 #include "system/filesystems/vfs.h"
 #include "system/process/multitasking.h"
 #include "realtime/vga/termproc.h"
+#include "drivers/keyboard.h"
 
 static const char testerchar[81] = {'\0'};
 process_t* proc;
 
-
+void onkeypress( uint32_t scancode, char ASCII, os32_kb_action_t action )
+{
+    if (ASCII && action == KB_RELEASE)
+        vfs_write( proc->local_fdt[0], &ASCII, 1 );
+}
 
 void rtvgamain()
 {
     vgaSetCursor( 0, 1 );
     vgaShowCursor(true);
+    os32_keyboard_set_routine( onkeypress );
 
     pid_t pid = __spawn("/initrd/bin/sh");
     pit_waitt(1);
@@ -27,7 +33,7 @@ void rtvgamain()
     first_proc->pid = pid;
     // for(;;);
     // memset(testerchar, 205, 80 );
-    rtvga_cls( VGA_BLACK );
+    rtvga_cls( VGA_WHITE, VGA_BLACK );
     while(1)
     {
         rtvga_topbar_flip();

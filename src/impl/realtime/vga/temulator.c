@@ -55,14 +55,14 @@ void temu_create( temu_t* t )
 {
     bzero((char*)t, sizeof(temu_t));
     streambuf_create( &t->vga_cells );
-    VGACell_t starter = (VGACell_t){.c='.',.fg=VGA_WHITE, .bg=VGA_BLACK };
-    size_t starters = VGA_WIDTH*(VGA_HEIGHT-1);
-    t->vga_cells.m_buf = krealloc( t->vga_cells.m_buf, starters*sizeof(starter) );
-    t->vga_cells.m_size = starters*sizeof(starter);
-    for (size_t i = 0; i < starters; i++ ) 
-        streambuf_write( &t->vga_cells, &starter, sizeof(starter) );
-    
+    t->vga_cells.m_buf = krealloc( t->vga_cells.m_buf, (VGA_WIDTH*(VGA_HEIGHT-1))*sizeof(VGACell_t) );
+    t->vga_cells.m_size =  (VGA_WIDTH*(VGA_HEIGHT-1))*sizeof(VGACell_t);
+    for (size_t i = 0; i < (VGA_WIDTH*(VGA_HEIGHT-1)); i++ ) 
+    {
+        *(VGACell_t*)(&t->vga_cells.m_buf[i*sizeof(VGACell_t)]) = (VGACell_t){.fg=VGA_WHITE, .bg=VGA_BLACK,.c=' '};
+    }
     t->state.fg=VGA_WHITE;
+    t->state.bg=VGA_BLACK;
 }
 err_t temu_readfromsb( temu_t* t, streambuf_t* sb, bool consume )
 {

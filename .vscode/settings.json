@@ -29,6 +29,7 @@
         "new": "c",
         "timer.h": "c",
         "string.h": "c",
-        "termproc.h": "c"
+        "termproc.h": "c",
+        "impl.h": "c"
     }
 }

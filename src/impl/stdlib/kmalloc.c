@@ -7,6 +7,9 @@
 #include "stdlib/assert.h"
 #include <stdbool.h>
 
+//TODO
+// Fix linked list impl for the malloc
+
 /**
  * Memory constants
  */
@@ -41,7 +44,8 @@ static char physical_present[PAGE_SIZE * 32];
 // virtual address-space heap management
 static void* kmalloc_heap_start = (void*) KERNEL_HEAP_START;
 // (the heap starts as 100 pages)
-static void* kmalloc_heap_end = (void*) KERNEL_HEAP_START+(PAGE_SIZE*100);
+#define KMALLOC_INITIAL_PAGES 1000
+static void* kmalloc_heap_end = (void*) KERNEL_HEAP_START+(PAGE_SIZE*KMALLOC_INITIAL_PAGES);
 
 // the initial page returned by kmalloc to set up paging
 static char bootstrap_page[PAGE_SIZE*2] __attribute__ ((aligned (PAGE_SIZE)));
@@ -131,15 +135,16 @@ void kmalloc_remove( struct kmalloc_header* h )
  * than or equal to zero, no split occurs.
  * @param h the block to split
  * @param size the desired size that h should be after this function
+ * @returns the newly added header
  */
-void kmalloc_split( struct kmalloc_header* h, size_t size )
+struct kmalloc_header* kmalloc_split( struct kmalloc_header* h, size_t size )
 {
     int remaining_size = h->size - size - sizeof(struct kmalloc_header);
     // if the second block would not have a size greater than zero
     // return here and don't perform a split
     if (remaining_size <= (int)sizeof(struct kmalloc_header))
     {
-        return;
+        return NULL;
     }
     // create a second block
     struct kmalloc_header* h2 = (struct kmalloc_header*)((((char*)h)+size+sizeof(struct kmalloc_header)));
@@ -148,6 +153,7 @@ void kmalloc_split( struct kmalloc_header* h, size_t size )
     h->size = size;
     // add the new block
     kmalloc_push(h2);
+    return h2;
 }
 /**
  * Merge a block back into the heap.
@@ -203,6 +209,7 @@ void kmalloc_expand()
 // TODO: Alignment
 struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
 {
+    if (size == 0) return NULL;
     struct kmalloc_header* ptr = kmalloc_heap_first;
     // kmalloc_stage is used to bootstrap the paging setup
 
@@ -223,7 +230,7 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
     // all further calls:
     else 
     {
-        if ((int)(kmalloc_volume() - size) < 2*PAGE_SIZE)
+        if ((int)(kmalloc_volume() - size) < 18*PAGE_SIZE)
         {
             kmalloc_expand();
         }
@@ -257,20 +264,28 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
             else
             {   
                 // struct kmalloc_header* alignedptr = (struct kmalloc_header*) ( (char*)ptr + (align-(uint32_t)ptr % align) - sizeof(struct kmalloc_header));
-                struct kmalloc_header* alignedptr = (((uint32_t)ptr + sizeof(struct kmalloc_header) + align-1)/align)*align - sizeof(struct kmalloc_header);
-                size_t total_size = ptr->size;
-                if (PAGE_ALIGNED((uint32_t)alignedptr+12) != alignedptr+1)
+                // struct kmalloc_header* alignedptr = (((uint32_t)ptr + sizeof(struct kmalloc_header) + align-1)/align)*align - sizeof(struct kmalloc_header);
+                // size_t total_size = ptr->size;
+                // ptr->size = (char*)alignedptr-((char*)ptr + sizeof(struct kmalloc_header));
+                // alignedptr->size = total_size-ptr->size-sizeof(struct kmalloc_header);
+                // alignedptr->next = NULL;
+                // alignedptr->prev = NULL;
+                // kmalloc_split( alignedptr, size );
+                // ptr = alignedptr;
+                // kmalloc_remove(ptr);
+                int offset = align - ( ((uint32_t)ptr)%align ) -2*sizeof(struct kmalloc_header);
+                while (offset <= sizeof(struct kmalloc_header))
                 {
-                    vga_assert(false);
+                    offset+=align;
                 }
-                ptr->size = (char*)alignedptr-((char*)ptr + sizeof(struct kmalloc_header));
-                alignedptr->size = total_size-ptr->size-sizeof(struct kmalloc_header);
-                alignedptr->next = NULL;
-                alignedptr->prev = NULL;
-                kmalloc_split( alignedptr, size );
+                struct kmalloc_header* alignedptr = kmalloc_split( ptr, offset );
+                vga_assert(alignedptr);
+                kmalloc_split(alignedptr, size);
+                kmalloc_remove(alignedptr);
                 ptr = alignedptr;
+                vga_assert( PAGE_ALIGNED((uint32_t)ptr+sizeof(struct kmalloc_header)) == (uint32_t)ptr+sizeof(struct kmalloc_header) );
             }
-            
+            vga_assert(ptr->size >= size);
             return ptr;
         }
         // if at the end, break;
@@ -278,8 +293,8 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
 
         ptr=ptr->next;
     }
-
-
+    __set_errno(ENOMEM);
+    kpanic("kmalloc");
     return NULL;
 }
 
@@ -388,9 +403,9 @@ err_t __install_kmalloc()
     }
 
     // allocate 100 pages for the heap to start off with
-    kmalloc_alloc_pages( &boot_page_directory, 100ul, (void*) KERNEL_HEAP_START, (page_table_ent_t){ .present=1, .rw=1 } );
+    kmalloc_alloc_pages( &boot_page_directory, KMALLOC_INITIAL_PAGES, (void*) KERNEL_HEAP_START, (page_table_ent_t){ .present=1, .rw=1 } );
     // zero out the entire heap to start off
-    memset(kmalloc_heap_start, 0, 100*PAGE_SIZE);
+    memset(kmalloc_heap_start, 0, KMALLOC_INITIAL_PAGES*PAGE_SIZE);
 
     return OS32_SUCCESS;
 }
@@ -438,6 +453,7 @@ void kprotect( kmalloc_ptr ptr)
 kmalloc_ptr krealloc( kmalloc_ptr ptr, size_t size )
 {
     // DNE
+    if (size == 0) return NULL;
     if (!ptr) return kmalloc(size);
     struct kmalloc_header* header = (struct kmalloc_header*)(((char*)ptr)-sizeof(struct kmalloc_header));
     if ( header->size == size )

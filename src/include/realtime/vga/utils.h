@@ -3,6 +3,6 @@
 #include "boot/vga.h"
 #include <stdbool.h>
 
-void rtvga_cls( vgac_t color );
+void rtvga_cls( vgac_t fg, vgac_t bg );
 
 #endif
