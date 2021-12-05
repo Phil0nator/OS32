@@ -30,12 +30,13 @@ $(USROUT): build/bin/% : usermode/%.c USERLIB
 OS32: $(COUT) $(ASMOUT) $(USROUT)
 	mkdir -p dist/x86 && \
 	cp -r build/bin/ /media/philokaulkin/a9ba968b-47d9-4a0f-bf54-f494689dc8d9 &&\
+	sync && sleep 1 && \
 	ld -O3 -melf_i386 -n -o targets/x86/iso/boot/kernel.elf -T targets/x86/linker.ld $(ASMOUT) $(COUT) && \
 	cp targets/x86/iso/boot/kernel.elf dist/x86/kernel.elf && \
 	grub-mkrescue /usr/lib/grub/i386-pc -o dist/x86/kernel.iso targets/x86/iso
 
 OS32_DBG: OS32
-	sleep 1 && qemu-system-i386 dist/x86/kernel.iso -s -S
+	qemu-system-i386 dist/x86/kernel.iso -s -S
 
 purge:
 	rm -rf build/ && mkdir build

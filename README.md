@@ -19,6 +19,7 @@ This is a 32bit x86 hobby kernel I have been putting together with help from [os
 - [ OK ] basic PIT drivers
 - [ OK ] basic RTC drivers
 - [ OK ] basic Keyboard drivers
+- [ OK ] keyboard input
 - [ OK ] kmalloc and paging
 - [ OK ] FPU setup
 - [ OK ] INITRD loading
@@ -30,7 +31,6 @@ This is a 32bit x86 hobby kernel I have been putting together with help from [os
 ## Still WIP
 - [...] ext2 write implimentation
 - [...] full vfs implimentation
-- [...] keyboard input
 - [...] Terminal emulation / ANSI escape codes
 - [...] Networking
 - [...] ...
