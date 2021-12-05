@@ -4,6 +4,7 @@
 #include "stdlib/string.h"
 #include "system/filesystems/linitrd.h"
 #include "stdlib/streambuf.h"
+#include "system/process/multitasking.h"
 
 #define VFS_ASSERT_FD(fd) if (fd < 0){__set_errno(EBADF);return OS32_ERROR;}
 
@@ -244,7 +245,14 @@ size_t vfs_read( fd_t fd, char* dest, size_t bytes )
     }
     else if (fdt[fd].fdtp == FD_STDSTREAM)
     {
-        size_t actual_bytes = (bytes > (fdt[fd].sb.m_size-fdt[fd].pos.ipos) ? (fdt[fd].sb.m_size-fdt[fd].pos.ipos) : bytes);
+        size_t actual_bytes;
+        __fd_stdstream_read_start:
+        actual_bytes = (bytes > (fdt[fd].sb.m_size-fdt[fd].pos.ipos) ? (fdt[fd].sb.m_size-fdt[fd].pos.ipos) : bytes);
+        if (actual_bytes == 0)
+        {
+            __yield();
+            goto __fd_stdstream_read_start;
+        }
         memcpy
         ( 
             dest, 
@@ -371,6 +379,11 @@ err_t vfs_fstat(fd_t fd, struct fstat* buf)
                 &ext2fstat
             );
             vfs_ext2stat_cpy( buf, &ext2fstat );
+        }
+        break;
+    case FD_STDSTREAM:
+        {
+            buf->size = fdt[fd].sb.m_size;
         }
         break;
     

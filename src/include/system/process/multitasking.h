@@ -19,7 +19,7 @@ int __fork();
 void __procswitch();
 void move_stack(void* destination, size_t size);
 int __getpid();
-
+void __yield();
 
 int __spawn(const char* path, const char** argv, const char* envp );
 err_t __exec( const char* path,  const char** argv, const char* envp  );

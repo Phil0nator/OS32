@@ -10,6 +10,7 @@
 #define USER_STACK_START ((void*)0xe0000000)
 #define STACK_SIZE (PAGE_SIZE*16)
 
+#define DEFAULT_QUANTUM 0x2
 
 
 typedef int pid_t;
@@ -26,6 +27,8 @@ typedef struct process
     char wd[VFS_MAX_PATH];
     uid_t uid;
     int status;
+    size_t quantum;
+    size_t quantum_progress;
 
     pid_t parent;
     struct process* next;

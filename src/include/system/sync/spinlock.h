@@ -7,6 +7,6 @@ typedef struct spinlock
 } spinlock_t;
 
 void aquire_spinlock( spinlock_t* s );
-void release_spinlocK( spinlock_t* s );
+void release_spinlock( spinlock_t* s );
 
 #endif

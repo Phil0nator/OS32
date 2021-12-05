@@ -5,10 +5,9 @@
 #include "stdlib/string.h"
 #include "stdlib/ioinstrs.h"
 #include "stdlib/assert.h"
+#include "system/sync/spinlock.h"
 #include <stdbool.h>
 
-//TODO
-// Fix linked list impl for the malloc
 
 /**
  * Memory constants
@@ -28,6 +27,12 @@
 #define BIT_N_OF_X(x, n) (bool)((x) & (1<<(n)))
 #define SET_BIT_N_OF_X(x, n) ((x) |= (1<<(n)))
 #define UNSET_BIT_N_OF_X(x, n) ((x) &= (~(1<<(n))))
+
+// sync
+static volatile spinlock_t kmalloc_sync;
+
+#define KMALLOC_SYNC(x) aquire_spinlock(&kmalloc_sync)
+#define KMALLOC_RELEASE(x) release_spinlock(&kmalloc_sync)
 
 // linker-defined
 extern volatile phys_addr* _kernel_start;
@@ -210,12 +215,14 @@ void kmalloc_expand()
 struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
 {
     if (size == 0) return NULL;
+    KMALLOC_SYNC();
     struct kmalloc_header* ptr = kmalloc_heap_first;
     // kmalloc_stage is used to bootstrap the paging setup
 
     // first call
     if (kmalloc_stage == 0) {
         kmalloc_stage ++;
+        KMALLOC_RELEASE();
         return ((struct kmalloc_header*) bootstrap_page)-1;
     }
     // second call
@@ -286,6 +293,7 @@ struct kmalloc_header* kmalloc_alloc( size_t size, size_t align )
                 vga_assert( PAGE_ALIGNED((uint32_t)ptr+sizeof(struct kmalloc_header)) == (uint32_t)ptr+sizeof(struct kmalloc_header) );
             }
             vga_assert(ptr->size >= size);
+            KMALLOC_RELEASE();
             return ptr;
         }
         // if at the end, break;
@@ -354,8 +362,10 @@ void kmalloc_alloc_pages(page_dir_t* page_directory, size_t count, void* virtual
     for(size_t i = 0; i < count; i++)
     {
 
+        KMALLOC_SYNC();
         phys_addr phys = kmalloc_next_phys();
         phys_reserve( phys );
+        KMALLOC_RELEASE();
 
         void* virt = virtual_addr;
         virtual_addr += PAGE_SIZE;
@@ -372,10 +382,12 @@ void phys_reserve_pages( phys_addr start, phys_addr end )
     // start&=(~0x1000);
     start = PAGE_ALIGNED(start);
     size_t last_page = (end&(~0x1000))+1;
+    KMALLOC_SYNC();
     for (;start < last_page; start += PAGE_SIZE)
     {
         phys_reserve(start);
     }
+    KMALLOC_RELEASE();
 }
 
 err_t __install_kmalloc()
@@ -472,6 +484,7 @@ kmalloc_ptr krealloc( kmalloc_ptr ptr, size_t size )
         // expand
         kmalloc_ptr nptr = kmalloc(size);
         memcpy(nptr, ptr, header->size);
+        bzero(nptr + header->size, size-header->size);
         kfree( ptr );
         return nptr;
     }

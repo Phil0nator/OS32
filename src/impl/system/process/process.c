@@ -13,6 +13,8 @@ void process_create( process_t* dest )
     dest->eip = 0;
     dest->esp = 0;
     dest->ebp = 0;
+    dest->quantum = DEFAULT_QUANTUM;
+    dest->quantum_progress;
     vfs_setup_proc(dest);
     memset(dest->wd, 0, sizeof(dest->wd));
     dest->wd[0]='/';

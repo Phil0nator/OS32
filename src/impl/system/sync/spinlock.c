@@ -9,7 +9,7 @@ void aquire_spinlock( spinlock_t* s )
         __pause();
     }
 }
-void release_spinlocK( spinlock_t* s )
+void release_spinlock( spinlock_t* s )
 {
     s->mtx = 0;
 }

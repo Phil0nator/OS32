@@ -9,6 +9,13 @@
 #define __set_esp(src) asm volatile ( "mov %0, %%esp" : : "r" (src) )
 #define __set_ebp(src) asm volatile ( "mov %0, %%ebp" : : "r" (src) )
 #define __flush_regs(x) asm volatile ("" ::: "%eax", "%ebx", "%ecx", "%edx", "%edi", "%esi")
+
+typedef unsigned long int eflags_t;
+
+#define __get_eflags( dest ) asm volatile ("pushf; pop %%eax;" : "=a"(dest))
+#define __set_eflags(  src ) asm volatile ("push %0; popf" : : "r"(src))
+
+
 uint32_t __get_eip();
 
 

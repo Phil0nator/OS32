@@ -6,6 +6,7 @@
 #include "system/filesystems/vfs.h"
 #include "stdlib/string.h"
 #include "system/process/elf.h"
+#include "drivers/timer.h"
 // https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
 #define DUMMY_SWITCH 0x123
 
@@ -224,4 +225,14 @@ process_t* get_proc_by_id( pid_t pid )
     if (proc->pid == pid) return proc;
     return OS32_FAILED;
 
+}
+
+void __yield()
+{
+    current_process->quantum_progress = current_process->quantum;
+    eflags_t flags;
+    __get_eflags(flags);
+    __sti
+    pit_waitt(1);
+    __set_eflags(flags);
 }

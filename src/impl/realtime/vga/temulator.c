@@ -26,6 +26,8 @@ static void temu_consume( temu_t* t, const char* data, size_t bytes )
             }
             t->state.fg = oldfg;
             t->state.bg = oldbg;
+            t->state.cursor.x = 0;
+            t->state.cursor.y++;
         }
         else
         {
