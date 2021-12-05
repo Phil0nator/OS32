@@ -43,6 +43,11 @@ void rtvgamain()
         {
             char buffer[256] = {0};
             size_t amt = vfs_read( proc->local_fdt[i], buffer, 256 );
+            if (amt == OS32_ERROR)
+            {
+                kpanic("rtvgamain");
+            }
+            if (amt == 0) continue;
             new_data+=amt;
             switch (i)
             {

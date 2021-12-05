@@ -45,7 +45,7 @@ err_t __install_tss();
  * Enter usermode on a given entrypoint
  * 
  */
-void tss_enter_usermode( void* entrpoint, void* stack );
+void tss_enter_usermode( void* entrpoint, void* stack, int argc, const char* argv, const char* envp  );
 
 
 #endif

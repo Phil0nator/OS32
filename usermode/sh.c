@@ -11,9 +11,9 @@ int _start(int argc, char const *argv[])
     getcwd(cwd, PATH_MAX);
     while(true)
     {
-        puts("root@os32: ");
+        puts("root@os32:");
         puts(cwd);
-        // puts("$");
+        puts("$");
         for(;;);
     }
     return 0;

@@ -28,7 +28,7 @@ void __elf_test()
     kfree(data);
     vfs_close(fd);
     
-    process_start(&proc, entry);
+    process_start(&proc, entry, NULL, NULL);
 
     process_destroy(&proc);
 }

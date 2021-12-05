@@ -54,6 +54,7 @@ typedef struct fd_entry
     };
     // cursor
     fd_pos_t pos;
+    char pathname[VFS_MAX_PATH];
     
 } fd_entry_t;
 
@@ -195,7 +196,7 @@ fd_t vfs_open( const char* fpath, int mode )
             fdt[vfsfd].fdtp = vfspdt[i].fdtp;
             fdt[vfsfd].pos = (fd_pos_t){ 0, 0 };
             fdt[vfsfd].present = true;
-
+            strncpy( fdt[vfsfd].pathname, VFS_MAX_PATH, fpath );
             // Depending on the type of fd,
             // Load the rest of the properties into the table
             switch (fdt[vfsfd].fdtp)
@@ -243,16 +244,15 @@ size_t vfs_read( fd_t fd, char* dest, size_t bytes )
     }
     else if (fdt[fd].fdtp == FD_STDSTREAM)
     {
-        size_t actual_bytes = (bytes > fdt[fd].sb.m_size ? fdt[fd].sb.m_size : bytes);
-        // memcpy
-        // ( 
-        //     dest, 
-        //     fdt[fd].sb.m_buf + fdt[fd].pos.ipos, 
-        //     actual_bytes
-        // );
-        // fdt[fd].pos.ipos += actual_bytes;
-        // fdt[fd].
-        streambuf_read( &fdt[fd].sb, dest, actual_bytes, SBRD_CONSUME );
+        size_t actual_bytes = (bytes > (fdt[fd].sb.m_size-fdt[fd].pos.ipos) ? (fdt[fd].sb.m_size-fdt[fd].pos.ipos) : bytes);
+        memcpy
+        ( 
+            dest, 
+            fdt[fd].sb.m_buf + fdt[fd].pos.ipos, 
+            actual_bytes
+        );
+        fdt[fd].pos.ipos += actual_bytes;
+        // streambuf_read( &fdt[fd].sb, dest, actual_bytes, SBRD_CONSUME );
         return actual_bytes;
     }
     return OS32_ERROR;
@@ -472,3 +472,10 @@ err_t vfs_clean_proc( struct process* proc )
 
 }
 
+
+
+const char* vfs_fpath( fd_t fd )
+{
+    VFS_ASSERT_FD(fd);
+    return fdt[fd].pathname;
+}

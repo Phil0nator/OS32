@@ -21,7 +21,7 @@
 // Chosen kernel heap physical address-space start
 #define KERNEL_PHYS_START (0x100000)
 // Chosen kernel heap physical address-space end
-#define KERNEL_PHYS_END (0x200000)
+#define KERNEL_PHYS_END (0x300000)
 // upper memory
 #define MEM_UPPER_START (1048576)
 // Get the nth bit of x
@@ -461,7 +461,7 @@ kmalloc_ptr krealloc( kmalloc_ptr ptr, size_t size )
         // same
         return ptr;
     }
-    else if (header->size < size)
+    else if (header->size > size)
     {
         // trunc
         kmalloc_split(header, size);

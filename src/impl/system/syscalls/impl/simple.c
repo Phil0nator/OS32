@@ -18,3 +18,31 @@ int __s_getcwd( char* buf, size_t len )
     memcpy( buf, current_process->wd, actual_len > len ? len : actual_len );
     return actual_len;
 }
+int __s_chdir(const char* path)
+{
+    struct fstat nullbuf;
+    if (vfs_stat( path, &nullbuf ) != OS32_ERROR)
+    {
+        strcpy(current_process->wd, path);
+        return OS32_SUCCESS;
+    } 
+    return errno;
+}
+int __s_fchdir( int fd )
+{
+    struct fstat nullbuf;
+    if (vfs_fstat( fd, &nullbuf ) != OS32_ERROR)
+    {
+        strcpy(current_process->wd, vfs_fpath(fd));
+        return OS32_SUCCESS;
+    }
+    return errno;
+}
+int __s_fork()
+{
+    return __fork();
+}
+int __s_execve( const char* filename, const char* argv, const char* envp )
+{
+    
+}

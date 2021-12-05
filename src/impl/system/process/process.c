@@ -23,7 +23,7 @@ void process_destroy( process_t* proc )
     vfs_clean_proc(proc);
 
 }
-void process_start( process_t* proc, void (*entrypoint)() )
+void process_start( process_t* proc, void (*entrypoint)(), const char* argv, const char* envp  )
 {
     set_pd( proc->pdir );
 
@@ -33,6 +33,15 @@ void process_start( process_t* proc, void (*entrypoint)() )
     proc->esp = USER_STACK_START+STACK_SIZE-32;
     proc->ebp = USER_STACK_START;
     
+    int argc = 0;
+    if(argv)
+    {
+        while(*argv)
+        {
+            argv++;
+            argc++;
+        }
+    }
 
-    tss_enter_usermode( entrypoint, USER_STACK_START + STACK_SIZE-32 );
+    tss_enter_usermode( entrypoint, USER_STACK_START + STACK_SIZE-32, argc, argv, envp );
 }

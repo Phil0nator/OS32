@@ -7,5 +7,9 @@ syscall_routine_t __os32_syscall_registry[256] =
 {
     REGISTER_SYSCALL(read),
     REGISTER_SYSCALL(write),
-    REGISTER_SYSCALL(getcwd)
+    REGISTER_SYSCALL(getcwd),
+    REGISTER_SYSCALL(chdir),
+    REGISTER_SYSCALL(fchdir),
+    REGISTER_SYSCALL(fork),
+    REGISTER_SYSCALL(execve)
 };

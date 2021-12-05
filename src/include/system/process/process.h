@@ -25,7 +25,9 @@ typedef struct process
     fd_t local_fdt[128];
     char wd[VFS_MAX_PATH];
     uid_t uid;
+    int status;
 
+    pid_t parent;
     struct process* next;
 
 } process_t;
@@ -33,6 +35,6 @@ typedef struct process
 
 void process_create( process_t* dest );
 void process_destroy( process_t* proc );
-void process_start( process_t* proc, void (*entrypoint)() );
+void process_start( process_t* proc, void (*entrypoint)(), const char* argv, const char* envp  );
 
 #endif

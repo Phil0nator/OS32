@@ -181,7 +181,7 @@ int __spawn(const char* path)
         elf_free(elf);
         kfree(data);
         vfs_close(fd);
-        process_start(proc, entry);
+        process_start(proc, entry, NULL, NULL);
 
         process_destroy(proc);
         proc->eip = NULL;

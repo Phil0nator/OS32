@@ -3,17 +3,18 @@
 #include <stdint.h>
 uint32_t __do_syscall( uint32_t number, uint32_t a, uint32_t b, uint32_t c, uint32_t d, uint32_t e, uint32_t f )
 {
+    uint32_t ret;
     asm volatile (
         "                   \
         push %%ebp;           \
-        mov %6, %%ebp;           \
+        mov %7, %%ebp;           \
         int $0x80;            \
         pop %%ebp;            \
-        leave;              \
-        ret;                \
+        mov %%eax, %0;      \
         "                  
-        : : "b"(a), "c"(b), "d"(c), "S"(d), "D"(e), "a"(number), "g"(f)
+        : "=g"(ret) : "b"(a), "c"(b), "d"(c), "S"(d), "D"(e), "a"(number), "g"(f)
     );
+    return ret;
 }
 
 int read( int fd, void* buf, size_t count )
@@ -27,4 +28,20 @@ int write( int fd, const void* buf, size_t count )
 int getcwd(char* buf, size_t len)
 {
     return __do_syscall( SYSNO(getcwd), buf, len,0,0,0,0 );
+}
+int chdir( const char* path )
+{
+    return __do_syscall( SYSNO(chdir),path,0,0,0,0,0 );
+}
+int fchdir( int fd )
+{
+    return __do_syscall( SYSNO(fchdir), fd, 0,0,0,0,0 );
+}
+int fork()
+{
+    return __do_syscall( SYSNO(fork), 0,0,0,0,0,0 );
+}
+int execve( const char* filename, const char* argv, const char* envp )
+{
+    return __do_syscall( SYSNO(execve), filename, argv, envp, 0, 0, 0 );
 }

@@ -15,19 +15,28 @@ __ltr:
     ret
 
 ; https://wiki.osdev.org/Getting_to_Ring_3
-; void __umode_iret( void (*x)(), void* stack )
+; void __umode_iret( void (*x)(), void* stack, int argc, const char* argv, const char* envp )
 __umode_iret:
     cli
     push ebp
     mov ebp, esp
-    mov ebx, dword[ebp+8]
-    mov edx, dword[ebp+12]
+    mov ebx, dword[ebp+8]       ; entrypoint
+    mov edx, dword[ebp+12]      ; stack
+    mov edi, dword[ebp+16]      ; argc
+    mov esi, dword[ebp+20]      ; argv
+    mov ecx, dword[ebp+24]      ; envp
     mov ax, (5 * 8) | 3
     mov ds, ax
     mov es, ax
     mov fs, ax
     mov gs, ax
 
+    mov [edx], edi
+    mov [edx-4], esi
+    mov [edx-8], ecx
+    sub edx, 8
+
+    ; PUSH for entering ring 0
     ; mov eax, esp
     push (5 * 8) | 3
     push edx

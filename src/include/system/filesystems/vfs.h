@@ -38,5 +38,6 @@ err_t vfs_stat(const char* path, struct fstat* buf);
 err_t vfs_fstat(fd_t fd, struct fstat* buf);
 err_t vfs_lstat(const char* path, struct fstat* buf);
 
+const char* vfs_fpath( fd_t fd );
 
 #endif
