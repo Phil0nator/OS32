@@ -8,5 +8,5 @@ int __s_getcwd( char* buf, size_t len );
 int __s_chdir(const char* path);
 int __s_fchdir( int fd );
 int __s_fork();
-int __s_execve( const char* filename, const char* argv, const char* envp );
+int __s_execve( const char* filename, const char** argv, const char* envp );
 #endif

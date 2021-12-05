@@ -159,36 +159,56 @@ int __getpid()
     return current_process->pid;
 }
 
-int __spawn(const char* path)
+int __spawn(const char* path, const char** argv, const char* envp )
 {
     pid_t pid = 0;
     if ((pid = __fork()) == 0)
     {
-        fd_t fd = vfs_open( path, 0);
-        if (fd < 0)
-        {
-            kpanic("could not open test");
-        }
-        vfs_seekg( fd, 0, VFS_SEEK_END );
-        size_t len = vfs_tellg(fd);
-        vfs_seekg( fd, 0, VFS_SEEK_SET );
-        char* data = kmalloc( len );
-        vfs_read(fd, data, len);
-        struct elf_file* elf = elf_load( data );
-        process_t* proc = current_process;
-
-        void (*entry)() = elf_load_for_exec( elf, proc );
-        elf_free(elf);
-        kfree(data);
-        vfs_close(fd);
-        process_start(proc, entry, NULL, NULL);
-
-        process_destroy(proc);
-        proc->eip = NULL;
-        for(;;);
-
+        __exec(path,argv,envp);
     }
     return pid;
+}
+
+err_t __exec( const char* path, const char** argv, const char* envp  )
+{
+    fd_t fd = vfs_open( path, 0);
+    if (fd < 0)
+    {
+        return OS32_ERROR;
+    }
+    vfs_seekg( fd, 0, VFS_SEEK_END );
+    size_t len = vfs_tellg(fd);
+    vfs_seekg( fd, 0, VFS_SEEK_SET );
+    char* data = kmalloc( len );
+    if (!data || data == OS32_FAILED)
+    {
+        return OS32_ERROR;
+    }
+    err_t e = vfs_read(fd, data, len);
+    if (e == OS32_ERROR)
+    {
+        return OS32_ERROR;
+    }
+    struct elf_file* elf = elf_load( data );
+    if (elf == OS32_FAILED)
+    {
+        return OS32_ERROR;
+    }
+    process_t* proc = current_process;
+
+    void (*entry)() = elf_load_for_exec( elf, proc );
+    if (entry == OS32_FAILED)
+    {
+        return OS32_ERROR;
+    }
+    elf_free(elf);
+    kfree(data);
+    vfs_close(fd);
+    process_start(proc, entry, argv, envp);
+
+    process_destroy(proc);
+    proc->eip = NULL;
+    for(;;);
 }
 
 process_t* get_proc_by_id( pid_t pid )

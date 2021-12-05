@@ -41,7 +41,7 @@ int fork()
 {
     return __do_syscall( SYSNO(fork), 0,0,0,0,0,0 );
 }
-int execve( const char* filename, const char* argv, const char* envp )
+int execve( const char* filename, const char** argv, const char* envp )
 {
     return __do_syscall( SYSNO(execve), filename, argv, envp, 0, 0, 0 );
 }

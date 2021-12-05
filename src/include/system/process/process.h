@@ -35,6 +35,6 @@ typedef struct process
 
 void process_create( process_t* dest );
 void process_destroy( process_t* proc );
-void process_start( process_t* proc, void (*entrypoint)(), const char* argv, const char* envp  );
+void process_start( process_t* proc, void (*entrypoint)(), const char** argv, const char* envp  );
 
 #endif

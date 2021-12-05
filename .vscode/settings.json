@@ -30,6 +30,7 @@
         "timer.h": "c",
         "string.h": "c",
         "termproc.h": "c",
-        "impl.h": "c"
+        "impl.h": "c",
+        "ia32intrin.h": "c"
     }
 }

@@ -25,7 +25,7 @@ void rtvgamain()
     vgaShowCursor(true);
     os32_keyboard_set_routine( onkeypress );
 
-    pid_t pid = __spawn("/initrd/bin/sh");
+    pid_t pid = __spawn("/initrd/bin/sh", NULL, NULL);
     pit_waitt(1);
     proc = get_proc_by_id(pid);
     rtvga_termproc_t* first_proc = kmalloc(sizeof(rtvga_termproc_t));

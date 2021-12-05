@@ -42,7 +42,7 @@ int __s_fork()
 {
     return __fork();
 }
-int __s_execve( const char* filename, const char* argv, const char* envp )
+int __s_execve( const char* filename, const char** argv, const char* envp )
 {
-    
+    return __exec( filename, argv, envp );
 }

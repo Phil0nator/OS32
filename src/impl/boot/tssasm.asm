@@ -15,7 +15,7 @@ __ltr:
     ret
 
 ; https://wiki.osdev.org/Getting_to_Ring_3
-; void __umode_iret( void (*x)(), void* stack, int argc, const char* argv, const char* envp )
+; void __umode_iret( void (*x)(), void* stack, int argc, const char** argv, const char* envp )
 __umode_iret:
     cli
     push ebp
