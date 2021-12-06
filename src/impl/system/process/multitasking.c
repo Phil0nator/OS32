@@ -53,7 +53,7 @@ err_t __install_multitasking()
 {
     __cli
     current_process = (process_list = kmalloc( sizeof(process_t) ));
-    process_create(current_process);
+    process_create(current_process, true);
     current_process->pid = next_pid++;
     current_process->eip = __get_eip();
     uint32_t esp, ebp;
@@ -145,8 +145,12 @@ int __fork()
     volatile process_t* parent = current_process;
     volatile process_t* newproc = kmalloc( sizeof(process_t) );
     volatile uint32_t eip;
-    process_create( newproc );
+    process_create( newproc, true );
+    // memcpy(newproc->local_fdt, parent->local_fdt, sizeof(parent->local_fdt));
     newproc->pid = next_pid++;
+    newproc->quantum = parent->quantum;
+    strcpy(newproc->wd, parent->wd);
+
     push_proc(newproc);
     dir_dup( newproc->pdir, parent->pdir );
     OS32_MAKEINSTR("nop;nop;nop;");

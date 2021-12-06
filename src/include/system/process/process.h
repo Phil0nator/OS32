@@ -36,7 +36,7 @@ typedef struct process
 } process_t;
 
 
-void process_create( process_t* dest );
+void process_create( process_t* dest, bool io );
 void process_destroy( process_t* proc );
 void process_start( process_t* proc, void (*entrypoint)(), const char** argv, const char* envp  );
 

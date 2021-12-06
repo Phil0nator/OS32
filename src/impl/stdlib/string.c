@@ -96,3 +96,8 @@ bool starts_with( const char* a, const char* b )
     }
     return true;
 }
+
+size_t strcat( const char* a, const char* b )
+{
+    strcpy( a + strlen(a)-1, b );
+}

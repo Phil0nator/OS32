@@ -21,7 +21,7 @@ void __elf_test()
     struct elf_file* elf = elf_load( data );
     process_t proc;
     bzero(&proc, sizeof(process_t));
-    process_create(&proc);
+    process_create(&proc, true);
 
     void (*entry)() = elf_load_for_exec( elf, &proc );
     elf_free(elf);

@@ -172,6 +172,7 @@ fd_t vfs_open( const char* fpath, int mode )
     // Search through all mounted partitions
     for (size_t i = 0; i < VFS_MAX_MEDIA; i++ )
     {
+        if (!vfspdt[i].present) break;
         // check if this path goes to this mounted partition
         if ( starts_with( fpath, vfspdt[i].mountpoint) )
         {
@@ -359,8 +360,11 @@ void vfs_ext2stat_cpy( struct fstat* dest, const struct ext2_fstat* src )
 
 err_t vfs_stat(const char* path, struct fstat* buf)
 {
-
-    return OS32_SUCCESS;
+    int tmpfd = vfs_open(path, NULL);
+    VFS_ASSERT_FD(tmpfd)
+    err_t e = vfs_fstat(tmpfd, buf);
+    vfs_close(tmpfd);
+    return e;
 }
 err_t vfs_fstat(fd_t fd, struct fstat* buf)
 {

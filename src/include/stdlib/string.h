@@ -95,4 +95,6 @@ const char* strerror( errno_t e );
  */
 bool starts_with( const char* a, const char* b );
 
+size_t strcat( const char* a, const char* b );
+
 #endif

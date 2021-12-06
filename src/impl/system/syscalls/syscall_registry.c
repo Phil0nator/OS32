@@ -11,5 +11,8 @@ syscall_routine_t __os32_syscall_registry[256] =
     REGISTER_SYSCALL(chdir),
     REGISTER_SYSCALL(fchdir),
     REGISTER_SYSCALL(fork),
-    REGISTER_SYSCALL(execve)
+    REGISTER_SYSCALL(execve),
+    REGISTER_SYSCALL(stat),
+    REGISTER_SYSCALL(fstat),
+    REGISTER_SYSCALL(lstat)
 };
