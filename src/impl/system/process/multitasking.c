@@ -91,7 +91,7 @@ void __procswitch()
     ebp = current_process->ebp;
     eip = current_process->eip;
     outportb(0x20, 0x20);
-
+    current_page_directory = current_process->pdir;
     // set_pd(current_process->pdir);
     asm volatile("         \
      cli;                 \
@@ -100,7 +100,7 @@ void __procswitch()
      mov %2, %%ebp;       \
      mov %3, %%cr3;       \
      mov $0x123, %%eax; \
-     sti;                 \
+     sti;                \
      jmp *%%edi           "
                 : : "r"(eip), "r"(esp), "r"(ebp), "r"(current_process->pdir->phys));
 }
