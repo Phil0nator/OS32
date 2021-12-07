@@ -263,6 +263,8 @@ typedef struct ext2_partition
     
 } ext2_partition_t;
 
+
+
 ext2_inode_t* ext2_get_inode( struct ext2_partition* src, size_t index )
 {
     // Find which group the indode belongs to
@@ -281,6 +283,19 @@ char* ext2_get_block( struct ext2_partition* src, uint32_t blockno )
 {
     // block = (data start) + (block index * block size)
     return (src->raw_data)+blockno*src->block_size;
+}
+
+ext2_inode_t* ext2_inode_alloc(struct ext2_partition* src, size_t parent)
+{
+    size_t group = (parent-1) / src->base_superbock->in_grp;
+    uint8_t* bmap = ext2_get_block(src, src->bgdt[group].blk_usg);
+    for ( size_t i = 0 ; i < src->block_size; i++ )
+    {
+        if (bmap[i] == 0)
+        {
+            
+        }
+    }
 }
 
 /**
@@ -339,16 +354,21 @@ uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* na
     // buffer to store one chunk of the table at a time
     char buffer[1024] = {0};
     // while true...
-    for(size_t iter = 0; 1; iter++ )
+    for(size_t iter = 0; (iter+1)*sizeof(buffer) < dir->size_low; iter++ )
     {
         // read data from the table into the buffer
-        if (ext2_read_bytes( p, dir, buffer, sizeof(buffer), iter*sizeof(buffer) ) <= 0) return OS32_ERROR;
+        if (ext2_read_bytes( p, dir, buffer, sizeof(buffer), iter*sizeof(buffer) ) <= 0)
+        {
+            __set_errno(ENOENT);
+            return OS32_ERROR;
+        } 
+            
         for 
         (
             // find the direntry
             ext2_dirent_head_t* head = (ext2_dirent_head_t*) buffer; 
             // while there are more direntries in this buffer
-            (char*)head != buffer+sizeof(buffer); 
+            (char*)head < buffer+sizeof(buffer); 
             // update dirent to the next dirent
             head = (ext2_dirent_head_t*)(((char*)head)+head->size)
         )
@@ -367,6 +387,7 @@ uint32_t ext2_find_in_dir(ext2_partition_t* p, ext2_inode_t* dir, const char* na
                 return head->inode;
             }
         } 
+        bzero(buffer, sizeof(buffer));
     }
     // File does not exist
     __set_errno( ENOENT );
@@ -605,6 +626,12 @@ err_t ext2_lstat(struct ext2_partition* p, const char* path, struct ext2_fstat* 
     // copy the inode data to the fstat struct
     ext2_stat_inodecpy( in, buf );
     return OS32_SUCCESS;
+}
+
+
+err_t ext2_mkdir( struct ext2_partition* p, const char* path, mode_t mode )
+{
+
 }
 
 #pragma pack(0)

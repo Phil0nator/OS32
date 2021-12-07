@@ -13,6 +13,8 @@ typedef int dev_t;
 typedef int uid_t;
 // Group id
 typedef int gid_t;
+// File mode
+typedef int mode_t;
 
 struct fstat
 {

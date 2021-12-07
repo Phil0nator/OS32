@@ -103,13 +103,16 @@ static void clone_table( page_dir_t* dest, size_t index, const page_dir_t* sourc
             phys_addr phys_dest, phys_src;
             phys_dest = newpg->pages[i].frame * PAGE_SIZE;
             phys_src = srct->pages[i].frame * PAGE_SIZE;
+            
+            eflags_t efl;
+            __get_eflags(efl);
             __cli
             wire_page(current_page_directory, phys_dest, phys_dest, (page_table_ent_t){.present=1,.rw=1});
             wire_page(current_page_directory, phys_src, phys_src, (page_table_ent_t){.present=1,.rw=1});
             memcpy(phys_dest, phys_src, PAGE_SIZE);
             unwire_page(current_page_directory, phys_dest);
             unwire_page(current_page_directory, phys_src);
-            __sti
+            __set_eflags(efl);
         }
     }
 }

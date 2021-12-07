@@ -2,6 +2,8 @@
 #include "boot/idt.h"
 #include "system/interrupt_frame.h"
 #include "boot/vga.h"
+#include "system/process/multitasking.h"
+
 // http://www.osdever.net/bkerndev/Docs/isrs.htm
 static const char *exception_messages[] =
 {
@@ -121,7 +123,7 @@ void __fault_handler( interrupt_frame_t* regs )
 {
     if (regs->intno < 32)
     {
-        vgaPrintf("%- %s: %i", exception_messages[regs->intno], regs->err);
+        vgaPrintf("%- Error: %s, Code: %i, PID: %i", exception_messages[regs->intno], regs->err, __getpid());
         for(;;);
     }
 }

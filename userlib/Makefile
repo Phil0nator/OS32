@@ -1,5 +1,5 @@
 CC = gcc
-USERMODEFLAGS = -Iinclude -I../src/include -O0 -g -m32 -nostdlib -static -ffreestanding -Wall -Wextra
+USERMODEFLAGS = -Iinclude -I../src/include -O0 -g -F dwarf -m32 -nostdlib -static -ffreestanding -Wall -Wextra
 
 SRCS := $(shell find src -name "*.c")
 OUTS := $(patsubst src/%.c, build/%.o, ${SRCS})

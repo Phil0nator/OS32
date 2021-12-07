@@ -39,5 +39,6 @@ err_t ext2_stat(struct ext2_partition* p, const char* path, struct ext2_fstat* b
 err_t ext2_fstat(struct ext2_partition* p, fd_t fd, struct ext2_fstat* buf);
 err_t ext2_lstat(struct ext2_partition* p, const char* path, struct ext2_fstat* buf);
 
+err_t ext2_mkdir( struct ext2_partition* p, const char* path, mode_t mode );
 
 #endif

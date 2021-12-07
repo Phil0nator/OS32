@@ -8,12 +8,8 @@
 int _start(int argc, char const *argv[])
 {
     // TODO
-    // Change ELF loader to not re-allocate pages
-    // for programs calling execve that already have
-    // usermode address-space allocated
-
-    // Maybe that will fix the page fault?
-
+    // fix page fault 4
+    
     puts("ls: run\n");
     for(;;);
 }

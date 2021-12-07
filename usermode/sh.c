@@ -42,17 +42,21 @@ int _start(int argc, char const *argv[])
         }
         else
         {
-            // char binpath[PATH_MAX] = "/initrd/bin/";
-            // strcpy(binpath+12, cmd_start);
-            // int pid = fork();
-            // if (!pid)
-            // {
-            //     execve( binpath, NULL, NULL );
-            // }
-            // else
-            // {
-            //     for(;;);
-            // }
+            char binpath[PATH_MAX] = "/initrd/bin/";
+            strcpy(binpath+12, cmd_start);
+            int pid = fork();
+            if (!pid)
+            {
+                int err = execve( binpath, NULL, NULL );
+                puts(binpath);
+                puts(": ");
+                puts(strerror(err));
+                for(;;);
+            }
+            else
+            {
+                for(;;);
+            }
         }
 
         bzero( cmd, 1024 );

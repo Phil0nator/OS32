@@ -81,12 +81,15 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
     for (size_t i = 0; i < pgs; i++)
     {
         void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
-        kmalloc_alloc_pages( 
-            proc->pdir, 
-            1, 
-            addr, 
-            perms
-        );
+        if ( !phys_addr_of( proc->pdir, addr ) ) 
+        {
+            kmalloc_alloc_pages( 
+                proc->pdir, 
+                1, 
+                addr, 
+                perms
+            );
+        }
         wire_page( 
             current_page_directory, 
             phys_addr_of( proc->pdir, addr ),
@@ -94,7 +97,10 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
             (page_table_ent_t){.present=1,.rw=1,.user=1} 
         );
         memset( addr, 0, PAGE_SIZE);
-        elf_unwire_from_dir( current_page_directory, addr );
+        if (current_page_directory != proc->pdir ) 
+        {
+            elf_unwire_from_dir( current_page_directory, addr );
+        }
     }
 }
 
@@ -266,8 +272,10 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                             (char*)elf->header+sh->sh_offset+i*PAGE_SIZE,
                             (char*)last_addr-((char*)sh->sh_addr+i*PAGE_SIZE)
                         );
-
-                    elf_unwire_from_dir( current_page_directory, addr );
+                    if (proc->pdir != current_page_directory)
+                    {
+                        elf_unwire_from_dir( current_page_directory, addr );
+                    }
                 }
             }
             break;

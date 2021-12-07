@@ -124,13 +124,13 @@ int __fork_sub(volatile process_t* parent, volatile process_t* newproc, uint32_t
 {
     if (current_process == parent)
     {
+        
         uint32_t ebp, esp;
         __get_esp(esp);
         __get_ebp(ebp);
         newproc->ebp = ebp;
         newproc->esp = esp;
         newproc->eip = eip;
-        __sti
         return newproc->pid;
     }
     else
@@ -141,12 +141,15 @@ int __fork_sub(volatile process_t* parent, volatile process_t* newproc, uint32_t
 
 int __fork()
 {
+    
+    eflags_t eflags;
+    __get_eflags(eflags);
     __cli
     volatile process_t* parent = current_process;
     volatile process_t* newproc = kmalloc( sizeof(process_t) );
     volatile uint32_t eip;
-    process_create( newproc, true );
-    // memcpy(newproc->local_fdt, parent->local_fdt, sizeof(parent->local_fdt));
+    process_create( newproc, false );
+    memcpy(newproc->local_fdt, parent->local_fdt, sizeof(parent->local_fdt));
     newproc->pid = next_pid++;
     newproc->quantum = parent->quantum;
     strcpy(newproc->wd, parent->wd);
@@ -155,7 +158,12 @@ int __fork()
     dir_dup( newproc->pdir, parent->pdir );
     OS32_MAKEINSTR("nop;nop;nop;");
     eip = __get_eip();
-    return __fork_sub(parent, newproc, eip);
+    int ret = __fork_sub(parent, newproc, eip);
+    if (ret == newproc->pid) 
+    {
+        __set_eflags(eflags);
+    }
+    return ret;
     
 }
 
