@@ -2,6 +2,7 @@
 #include "stdlib/string.h"
 #include "stdlib/kmalloc.h"
 #include "stdlib/error.h"
+#include "stdlib/assert.h"
 #include <elf.h>
 
 // https://wiki.osdev.org/ELF_Tutorial
@@ -87,20 +88,21 @@ void elf_load_nobits( struct elf_file* elf, process_t* proc, Elf32_Shdr* sh )
                 proc->pdir, 
                 1, 
                 addr, 
-                perms
+                (page_table_ent_t){.present=1,.rw=1,.user=1} 
+
             );
         }
+        memset( addr, 0, PAGE_SIZE);
         wire_page( 
             current_page_directory, 
             phys_addr_of( proc->pdir, addr ),
             addr,
-            (page_table_ent_t){.present=1,.rw=1,.user=1} 
+            perms
         );
-        memset( addr, 0, PAGE_SIZE);
-        if (current_page_directory != proc->pdir ) 
-        {
-            elf_unwire_from_dir( current_page_directory, addr );
-        }
+        // if (current_page_directory != proc->pdir ) 
+        // {
+        //     elf_unwire_from_dir( current_page_directory, addr );
+        // }
     }
 }
 
@@ -210,7 +212,7 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
 {
     if(!elf) return OS32_FAILED;
     if(!proc) return OS32_FAILED;
-    
+    vga_assert(current_page_directory == proc->pdir);
     // page_dir_t* oldpdir = set_pd( proc->pdir );
     
     elf_load_phase_1(elf, proc);
@@ -238,32 +240,21 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                 size_t pgs = ((sh->sh_size + (sh->sh_addr - (uint32_t)page_aligned_shaddr) )  / PAGE_SIZE)+1;
                 void* last_addr = page_aligned_shaddr+pgs*PAGE_SIZE;
 
-                // kmalloc_alloc_pages( 
-                //     proc->pdir, 
-                //     pgs, 
-                //     page_aligned_shaddr, 
-                //     perms
-                // );
+                
+                // memcpy(sh->sh_addr, (char*)elf->header+sh->sh_offset, sh->sh_size);
                 for (size_t i = 0; i < pgs; i++)
                 {
                     void* addr = (void*)((uint32_t)page_aligned_shaddr + i * PAGE_SIZE);
                     if ( phys_addr_of( proc->pdir, addr) == 0 )
                     {
-                        kmalloc_alloc_pages( proc->pdir, 1, addr, perms );
+                        kmalloc_alloc_pages( proc->pdir, 1, addr, (page_table_ent_t){.present=1,.rw=1,.user=1}  );
                     }
-                    wire_page( 
-                        current_page_directory, 
-                        phys_addr_of( proc->pdir, addr ),
-                        addr,
-                        (page_table_ent_t){.present=1,.rw=1, .user=1} 
-                    );
-                    // memset( addr, 0, PAGE_SIZE);
                     if ( i != pgs-1 )
                         memcpy
                         ( 
                             (char*)sh->sh_addr+i*PAGE_SIZE, 
                             (char*)elf->header+sh->sh_offset+i*PAGE_SIZE, 
-                            sh->sh_size
+                            ((char*)addr+PAGE_SIZE)-((char*)sh->sh_addr+i*PAGE_SIZE)
                         );
                     else
                         memcpy
@@ -272,10 +263,13 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
                             (char*)elf->header+sh->sh_offset+i*PAGE_SIZE,
                             (char*)last_addr-((char*)sh->sh_addr+i*PAGE_SIZE)
                         );
-                    if (proc->pdir != current_page_directory)
-                    {
-                        elf_unwire_from_dir( current_page_directory, addr );
-                    }
+                    wire_page( 
+                        current_page_directory, 
+                        phys_addr_of( current_page_directory, addr ),
+                        addr,
+                        perms
+                    );
+                    
                 }
             }
             break;

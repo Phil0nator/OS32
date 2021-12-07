@@ -1,5 +1,6 @@
 #include "os32std.h"
 #include "os32io.h"
+#include "sys/stat.h"
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -12,7 +13,7 @@ int _start(int argc, char const *argv[])
     while(true)
     {
         getcwd(cwd, PATH_MAX);
-        puts("root@os32:");
+        puts("poot@os32:");
         puts(cwd);
         puts("$");
         
@@ -36,7 +37,7 @@ int _start(int argc, char const *argv[])
             else
             {
                 puts("cd: ");
-                puts(strerror( err ));
+                puts(strerror( errno ));
                 putc('\n');
             }
         }

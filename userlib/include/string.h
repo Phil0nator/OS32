@@ -2,7 +2,7 @@
 #define OS32_STRING
 #include <stddef.h>
 #include <stdbool.h>
-#include <types.h>
+#include <sys/types.h>
 
 /**
  * Copy non-overlapping memory

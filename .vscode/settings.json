@@ -33,6 +33,9 @@
         "impl.h": "c",
         "ia32intrin.h": "c",
         "compare": "c",
-        "stddef.h": "c"
+        "stddef.h": "c",
+        "types.h": "c",
+        "wait.h": "c",
+        "stat.h": "c"
     }
 }

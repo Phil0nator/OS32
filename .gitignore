@@ -5,3 +5,6 @@ build/**
 resources/**
 dist/**
 lc.sh
+*.img
+*.elf
+*.a
