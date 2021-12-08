@@ -8,7 +8,7 @@
 
 void __elf_test()
 {
-    fd_t fd = vfs_open( "/initrd/bin/test", 0);
+    fd_t fd = vfs_open( "/initrd/bin/test", 0, 0);
     if (fd < 0)
     {
         kpanic("could not open test");

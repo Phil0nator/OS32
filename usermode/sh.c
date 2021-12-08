@@ -49,11 +49,24 @@ int _start(int argc, char const *argv[])
         else
         {
             char binpath[PATH_MAX] = "/initrd/bin/";
+            char* argvlist[256] = {0};
+            char** argvlistptr = argvlist;
+            for (char* c = cmd + space; c < cmd+sizeof(cmd); c++)
+            {
+                if (*c == ' ')
+                {
+                    *c = '\0';
+                    *argvlistptr = c+1;
+                    argvlistptr++;
+                } 
+            }
+            *argvlistptr = NULL;
+
             strcpy(binpath+12, cmd_start);
             int pid = fork();
             if (!pid)
             {
-                int err = execve( binpath, NULL, NULL );
+                int err = execve( binpath, argvlist, NULL );
                 puts(binpath);
                 puts(": ");
                 puts(strerror(errno));

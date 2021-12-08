@@ -5,7 +5,7 @@
 void __initrdext2_test()
 {
     char buffer[1024] = {0};
-    fd_t fd = vfs_open( "/initrd/test.txt", 0 );
+    fd_t fd = vfs_open( "/initrd/test.txt", 0, 0 );
     vfs_read( fd, buffer, 1024 );
     vfs_close( fd );
     vgaPuts(buffer);

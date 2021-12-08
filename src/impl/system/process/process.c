@@ -35,7 +35,7 @@ void process_start( process_t* proc, void (*entrypoint)(), const char** argv, co
     __get_esp(sp);
 
     if (!( sp >= KERNEL_STACK_START )) kmalloc_alloc_pages(current_page_directory, STACK_SIZE/PAGE_SIZE, KERNEL_STACK_START, (page_table_ent_t){.present=1, .rw=1} );
-    kmalloc_alloc_pages(current_page_directory, STACK_SIZE/PAGE_SIZE, USER_STACK_START, (page_table_ent_t){.present=1, .rw=1, .user=1});
+    if ( !phys_addr_of(current_page_directory, USER_STACK_START) )  kmalloc_alloc_pages(current_page_directory, STACK_SIZE/PAGE_SIZE, USER_STACK_START, (page_table_ent_t){.present=1, .rw=1, .user=1});
     proc->eip = (uint32_t) entrypoint;
     proc->esp = USER_STACK_START+STACK_SIZE-32;
     proc->ebp = USER_STACK_START;

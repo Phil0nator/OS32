@@ -29,10 +29,11 @@ err_t __install_vfs();
  * @brief open a file
  * 
  * @param fpath file path
+ * @param flags file flags
  * @param mode file mode
  * @return fd_t (-1 on error, sets errno) or positive file descriptor
  */
-fd_t vfs_open( const char* fpath, int mode );
+fd_t vfs_open( const char* fpath, int flags, int mode );
 
 /**
  * @brief write to a file

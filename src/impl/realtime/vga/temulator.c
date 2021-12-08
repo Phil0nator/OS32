@@ -13,6 +13,10 @@ static void temu_consume( temu_t* t, const char* data, size_t bytes )
         {
 
         }
+        else if (data[i] == '\t')
+        {
+            temu_consume(t, "     ", 5);
+        }
         else if (data[i] == '\n')
         {  
             vgac_t oldfg, oldbg;

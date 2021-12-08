@@ -11,3 +11,6 @@ lc.sh
 targets/x86/iso/boot/initrd.img
 targets/x86/iso/boot/kernel.elf
 targets/x86/iso/boot/initrd.img
+*.a
+*.elf
+*.img

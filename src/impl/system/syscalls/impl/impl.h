@@ -16,5 +16,6 @@ int __s_fstat( int fd, struct fstat* buf );
 int __s_lstat( const char* filename, struct fstat* buf );
 int __s_wait4(pid_t pid, int *wstatus, int options, void *rusage);
 int __s_exit(int status);
+int __s_open( const char* filename, int flags, int mode );
 
 #endif

@@ -256,7 +256,7 @@ int __spawn(const char* path, const char** argv, const char* envp )
 err_t __exec( const char* path, const char** argv, const char* envp  )
 {
     // open the file
-    fd_t fd = vfs_open( path, 0);
+    fd_t fd = vfs_open( path, 0, 0);
     if (fd < 0)
     {
         return OS32_ERROR;

@@ -110,3 +110,8 @@ int __s_exit(int status)
 {
     __exit(status);
 }
+
+int __s_open( const char* filename, int flags, int mode )
+{
+    return vfs_open( filename, flags, mode );
+}

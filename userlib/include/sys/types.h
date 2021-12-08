@@ -19,6 +19,6 @@ typedef int pid_t;
 // Inode number
 typedef unsigned long ino_t;
 typedef uint8_t filetp_t;
-
+typedef int mode_t;
 
 #endif

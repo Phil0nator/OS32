@@ -32,10 +32,17 @@ __umode_iret:
     mov gs, ax
 
     ; (push) parameters for argc, argv, envp
-    mov [edx], edi
-    mov [edx-4], esi
-    mov [edx-8], ecx
-    sub edx, 12
+    ; mov [edx-4], edi
+    ; mov [edx-8], esi
+    ; mov [edx-12], ecx
+    ; sub edx, 16
+    mov eax, esp
+    mov esp, edx
+    push ecx
+    push esi
+    push edi
+    push 0
+    mov esp, eax
 
     ; PUSH for entering ring 0
     ; mov eax, esp

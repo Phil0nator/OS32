@@ -167,7 +167,7 @@ err_t __install_vfs()
 }
 
 
-fd_t vfs_open( const char* fpath, int mode )
+fd_t vfs_open( const char* fpath, int mode, int flags )
 {
     // Search through all mounted partitions
     for (size_t i = 0; i < VFS_MAX_MEDIA; i++ )
@@ -360,7 +360,7 @@ void vfs_ext2stat_cpy( struct fstat* dest, const struct ext2_fstat* src )
 
 err_t vfs_stat(const char* path, struct fstat* buf)
 {
-    int tmpfd = vfs_open(path, NULL);
+    int tmpfd = vfs_open(path, NULL, NULL);
     VFS_ASSERT_FD(tmpfd)
     err_t e = vfs_fstat(tmpfd, buf);
     vfs_close(tmpfd);

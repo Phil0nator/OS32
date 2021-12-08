@@ -16,5 +16,6 @@ syscall_routine_t __os32_syscall_registry[256] =
     REGISTER_SYSCALL(fstat),
     REGISTER_SYSCALL(lstat),
     REGISTER_SYSCALL(wait4),
-    REGISTER_SYSCALL(exit)
+    REGISTER_SYSCALL(exit),
+    REGISTER_SYSCALL(open)
 };
