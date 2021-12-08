@@ -6,6 +6,7 @@
 #include "stdlib/ioinstrs.h"
 #include "stdlib/assert.h"
 #include "system/sync/spinlock.h"
+#include "stdlib/instructions.h"
 #include <stdbool.h>
 
 
@@ -180,6 +181,7 @@ void kmalloc_merge( struct kmalloc_header* h )
         {
             // expand it to consume h
             it->size += sizeof(struct kmalloc_header) + h->size;
+            KMALLOC_RELEASE();
             return;
         }
         // else if it is adjacent to h on its greater side,
@@ -189,6 +191,7 @@ void kmalloc_merge( struct kmalloc_header* h )
             h->size += sizeof(struct kmalloc_header) + it->size;
             kmalloc_push(h);
             kmalloc_remove(it);
+            KMALLOC_RELEASE();
             return;
         }
         // if at the end, break
@@ -198,6 +201,7 @@ void kmalloc_merge( struct kmalloc_header* h )
     // If no merge opporitunities could be found,
     // append h to the end of the heap
     kmalloc_push(h);
+    KMALLOC_RELEASE();
 }
 
 void kmalloc_expand()
@@ -456,7 +460,9 @@ kmalloc_ptr kmalloc_a( size_t size, size_t align )
 void kfree( kmalloc_ptr ptr )
 {
     if (!ptr || ptr == bootstrap_page) return;
+    KMALLOC_SYNC();
     kmalloc_merge((struct kmalloc_header*)(((char*)ptr)-sizeof(struct kmalloc_header)));
+    KMALLOC_RELEASE();
 }
 void kprotect( kmalloc_ptr ptr)
 {

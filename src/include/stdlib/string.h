@@ -95,6 +95,13 @@ const char* strerror( errno_t e );
  */
 bool starts_with( const char* a, const char* b );
 
+/**
+ * @brief concatenate strings
+ * 
+ * @param a string 1
+ * @param b string 2
+ * @return size_t the length of string b
+ */
 size_t strcat( const char* a, const char* b );
 
 #endif

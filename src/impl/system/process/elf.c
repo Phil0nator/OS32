@@ -278,11 +278,4 @@ elf_fn elf_load_for_exec( struct elf_file* elf, process_t* proc )
     // set_pd(oldpdir);
     return (elf_fn) elf->header->e_entry;
 }
-elf_fn elf_get_sym( struct elf_file* elf, const char* symbol )
-{
 
-}
-err_t elf_unload_from_exec( struct elf_file* elf, process_t* proc )
-{
-
-}

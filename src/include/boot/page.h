@@ -80,9 +80,29 @@ void dir_dup( page_dir_t* dest, const page_dir_t* src );
 // flush paging system (update)
 // extern void __invlpg_flush();
 void flushcr3();
+
+/**
+ * @brief Set the current pd
+ * 
+ * @param pd new page directory
+ * @return page_dir_t* old current_page_directory
+ */
 page_dir_t* set_pd( page_dir_t* pd );
+
+/**
+ * @brief Get the current pd
+ * 
+ * @return page_dir_t* current pd
+ */
 page_dir_t* get_pd(  );
 
+/**
+ * @brief make a new forked page directory
+ * 
+ * @param parent either NULL to fork from the current pd, 
+ *  or any pd pointer to fork from
+ * @return page_dir_t* the kmalloc'd page directory
+ */
 page_dir_t* mkpd( page_dir_t* parent );
 
 #endif
