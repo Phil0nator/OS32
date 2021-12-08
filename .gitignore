@@ -8,3 +8,4 @@ lc.sh
 *.img
 *.elf
 *.a
+targets/x86/iso/boot/initrd.img

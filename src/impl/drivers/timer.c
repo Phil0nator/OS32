@@ -39,6 +39,11 @@ static volatile pit_ticks_t total_ticks = 0;
 static void timer_routine()
 {
     total_ticks++;
+
+    if (!current_process)
+    {
+        return; // if multitasking is not yet installed, move on
+    }
     current_process->quantum_progress ++;
     if (current_process->quantum_progress >= current_process->quantum)
     {

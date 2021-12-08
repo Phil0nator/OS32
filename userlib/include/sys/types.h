@@ -16,6 +16,9 @@ typedef int gid_t;
 typedef unsigned long pxtime_t;
 // Process ID
 typedef int pid_t;
+// Inode number
+typedef unsigned long ino_t;
+typedef uint8_t filetp_t;
 
 
 #endif
