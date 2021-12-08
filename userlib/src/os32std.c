@@ -36,3 +36,8 @@ int execve( const char* filename, const char** argv, const char* envp )
 {
     return errno_wrap( __do_syscall( SYSNO(execve), filename, argv, envp, 0, 0, 0 ));
 }
+
+void _exit(int status)
+{
+    return __do_syscall( SYSNO(exit), status, 0 , 0, 0 , 0, 0 );
+}

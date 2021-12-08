@@ -2,12 +2,35 @@
 #include "boot/irq.h"
 #include "boot/vga.h"
 #include "system/process/multitasking.h"
+#include "stdlib/ioinstrs.h"
 
 //http://www.osdever.net/bkerndev/Docs/pit.htm
 
 #define PIT_IRQNO (0)
+#define PIT_DIVISOR (1193180)
+#define PIT_REG_CMD (0x43)
+#define PIT_REG_CH0 (0x40)
+#define PIT_REG_CH1 (0x41)
+#define PIT_REG_CH2 (0x42)
+
+#define PIT_MODE_ITTC (0 << 1)
+#define PIT_MODE_RETRIG (1 << 1)
+#define PIT_MODE_RATE (2 << 1)
+#define PIT_MODE_SQUARE (3 << 1)
+#define PIT_MODE_SOFTSTROBE (4 << 1)
+#define PIT_MODE_HARDSTROBE (5 << 1)
+
+#define PIT_RW_LSB (1 << 4)
+#define PIT_RW_MSB (2 << 4)
+#define PIT_RW_LSB_MSB (3 << 4)
+
+#define PIT_BCD_ON 1
+#define PIT_BCD_OFF 0
+
+#define PIT_CONTROL_BIT( bcd, mode, rw, cntr ) ( (bcd) | (mode) | (rw) | (cntr))
+
 // Ticks per second
-#define PIT_TPS ((float)18.222)
+// #define PIT_TPS ((float)18.222)
 
 
 
@@ -16,10 +39,21 @@ static volatile pit_ticks_t total_ticks = 0;
 static void timer_routine()
 {
     total_ticks++;
-    __procswitch();
+    current_process->quantum_progress ++;
+    if (current_process->quantum_progress >= current_process->quantum)
+    {
+        __procswitch();
+    }
 }
 
+void pit_sethz( size_t hz )
+{
 
+    int divided = hz/PIT_DIVISOR;
+    outportb( PIT_REG_CMD, PIT_CONTROL_BIT( PIT_BCD_OFF, PIT_MODE_SQUARE, PIT_RW_LSB_MSB, 0 ) );
+    outportb( PIT_REG_CH0, divided & 0xff );
+    outportb( PIT_REG_CH0, divided >> 8 );
+}
 
 void pit_waitt( pit_ticks_t ticks )
 {
@@ -39,5 +73,6 @@ pit_ticks_t pit_ticks()
 err_t __install_timer()
 {
     irq_install_routine( PIT_IRQNO, (void*)timer_routine );
+    pit_sethz( PIT_TPS );
     return OS32_SUCCESS;
 }

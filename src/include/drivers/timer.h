@@ -4,10 +4,12 @@
 #include <stddef.h>
 #include "stdlib/error.h"
 
+#define PIT_DEFAULT_TPS ((float)18.222)
+
 /**
  * PIT devices Ticks per Second
  */
-#define PIT_TPS             ((float)18.222)
+#define PIT_TPS             ((float)1000)
 /**
  * Convert PIT ticks to seconds
  */

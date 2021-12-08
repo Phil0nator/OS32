@@ -1,6 +1,7 @@
 #include "os32std.h"
 #include "os32io.h"
 #include "sys/stat.h"
+#include "sys/wait.h"
 
 #include <stddef.h>
 #include <stdbool.h>
@@ -41,6 +42,10 @@ int _start(int argc, char const *argv[])
                 putc('\n');
             }
         }
+        else if (*cmd_start == 0)
+        {
+
+        }
         else
         {
             char binpath[PATH_MAX] = "/initrd/bin/";
@@ -51,17 +56,24 @@ int _start(int argc, char const *argv[])
                 int err = execve( binpath, NULL, NULL );
                 puts(binpath);
                 puts(": ");
-                puts(strerror(err));
-                for(;;);
+                puts(strerror(errno));
+                putc('\n');
+                _exit(1);
             }
             else
             {
-                for(;;);
+                int status;
+                if (wait(&status) == OS32_ERROR)
+                {
+                    puts("wait: ");
+                    puts(strerror(errno));
+                    for(;;);
+                }
             }
         }
 
         bzero( cmd, 1024 );
 
     }
-    return 0;
+    _exit(0);
 }

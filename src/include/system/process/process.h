@@ -35,6 +35,13 @@ typedef struct process
 
 } process_t;
 
+typedef struct zombie
+{
+    pid_t pid;
+    pid_t parent;
+    int status;
+} zombie_t;
+
 
 void process_create( process_t* dest, bool io );
 void process_destroy( process_t* proc );

@@ -40,7 +40,7 @@ int __s_chdir(const char* path)
         strcpy(current_process->wd, pathptr);
         return OS32_SUCCESS;
     } 
-    return errno;
+    return -errno;
 }
 int __s_fchdir( int fd )
 {
@@ -50,7 +50,7 @@ int __s_fchdir( int fd )
         strcpy(current_process->wd, vfs_fpath(fd));
         return OS32_SUCCESS;
     }
-    return errno;
+    return -errno;
 }
 int __s_fork()
 {
@@ -60,25 +60,53 @@ int __s_execve( const char* filename, const char** argv, const char* envp )
 {
     __set_errno(OS32_SUCCESS);
     __exec( filename, argv, envp );
-    return errno; 
+    return -errno; 
 }
 int __s_stat( const char* filename, struct fstat* buf )
 {
     __set_errno(OS32_SUCCESS);
     CONCAFILENAME(filename)
     vfs_stat( pathptr, buf );
-    return errno;
+    return -errno;
 }
 int __s_fstat( int fd, struct fstat* buf )
 {
     __set_errno(OS32_SUCCESS);
     vfs_fstat( current_process->local_fdt[fd], buf );
-    return errno; 
+    return -errno; 
 }
 int __s_lstat( const char* filename, struct fstat* buf )
 {
     __set_errno(OS32_SUCCESS);
     CONCAFILENAME(filename)
     vfs_lstat( pathptr, buf );
-    return errno; 
+    return -errno; 
+}
+int __s_wait4(pid_t pid, int *wstatus, int options, void *rusage)
+{
+
+#define WNOHANG 1
+#define WUNTRACED 2
+#define WCONTINUED 4
+
+    zombie_t zomb;
+    if (pid == -1)
+    {
+        zomb = pull_zombie_by_parent( __getpid(), !( options & WNOHANG ) );
+    }
+    else
+    {
+        zomb = pull_zombie_by_id( pid, !( options & WNOHANG ) );
+    }
+    if (zomb.pid == -1)
+    {
+        return -EAGAIN;
+    }
+    if (wstatus) *wstatus = zomb.status;
+    return OS32_SUCCESS;
+}
+
+int __s_exit(int status)
+{
+    __exit(status);
 }

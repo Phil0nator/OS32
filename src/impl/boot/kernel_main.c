@@ -147,7 +147,13 @@ void _kernel_main()
     vgaPrintf("%+ Entering desktop mode...\n");
     // pit_waits(1);
     kmalloc_defrag();
-    rtmain();
+    
+    if (__fork())
+    {
+        kernel_mainloop(); // kernel task
+    }
+    rtmain(); // realtime manager (terminal emulator, window manager, etc...)
+
 
 
     for(;;);

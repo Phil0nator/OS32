@@ -17,6 +17,7 @@ int chdir( const char* path );
 int fchdir( int fd );
 int fork();
 int execve( const char* filename, const char** argv, const char* envp );
+void _exit(int status);
 
 int __get_errno();
 

@@ -16,6 +16,7 @@ void process_create( process_t* dest, bool io )
     dest->ebp = 0;
     dest->quantum = DEFAULT_QUANTUM;
     dest->quantum_progress;
+    dest->status = 0;
     if (io) vfs_setup_proc(dest);
     memset(dest->wd, 0, sizeof(dest->wd));
     dest->wd[0]='/';
@@ -23,7 +24,7 @@ void process_create( process_t* dest, bool io )
 void process_destroy( process_t* proc )
 {
     kfree(proc->pdir);
-    vfs_clean_proc(proc);
+    if (proc->parent == -1 ) vfs_clean_proc(proc);
 
 }
 void process_start( process_t* proc, void (*entrypoint)(), const char** argv, const char* envp  )

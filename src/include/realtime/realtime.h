@@ -8,5 +8,7 @@
 #define rtmain rtvgamain
 #endif
 
+#include "krtloop.h"
+#define kernel_mainloop krtloop
 
 #endif

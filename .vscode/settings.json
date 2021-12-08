@@ -36,6 +36,7 @@
         "stddef.h": "c",
         "types.h": "c",
         "wait.h": "c",
-        "stat.h": "c"
+        "stat.h": "c",
+        "static_set.h": "c"
     }
 }

@@ -7,11 +7,16 @@
 #include "stdlib/string.h"
 #include "system/process/elf.h"
 #include "drivers/timer.h"
+#include "stdlib/static_set.h"
 // https://web.archive.org/web/20160326122214/http://jamesmolloy.co.uk/tutorial_html/9.-Multitasking.html
 #define DUMMY_SWITCH 0x123
 
 volatile process_t* current_process;
 volatile process_t* process_list;
+statset_decl(zombie_t, zombies, OS32_MAX_ZOMBIE);
+// pid_t deadprocs[OS32_MAX_ZOMBIE] = {0};
+statset_decl( pid_t, deadprocs, OS32_MAX_ZOMBIE );
+
 pid_t next_pid = 1;
 
 multitasking_newproc_subroutine on_new_sub = NULL;
@@ -61,7 +66,7 @@ err_t __install_multitasking()
     __get_ebp(ebp);
     current_process->esp = esp;
     current_process->ebp = ebp;
-    
+    current_process->parent = -1;
     set_pd(current_process->pdir);    
     move_stack( 0xf0000000, 16384 );
     
@@ -149,6 +154,7 @@ int __fork()
     volatile process_t* newproc = kmalloc( sizeof(process_t) );
     volatile uint32_t eip;
     process_create( newproc, false );
+    newproc->parent = current_process->pid;
     memcpy(newproc->local_fdt, parent->local_fdt, sizeof(parent->local_fdt));
     newproc->pid = next_pid++;
     newproc->quantum = parent->quantum;
@@ -239,6 +245,13 @@ process_t* get_proc_by_id( pid_t pid )
 
 }
 
+err_t __setpriority( priority_t pri )
+{
+    if (pri < PRI_MIN || pri > PRI_MAX) return OS32_ERROR;
+    current_process->quantum = pri;
+    return OS32_SUCCESS;
+}
+
 void __yield()
 {
     current_process->quantum_progress = current_process->quantum;
@@ -247,4 +260,98 @@ void __yield()
     __sti
     pit_waitt(1);
     __set_eflags(flags);
+}
+
+void __exit(int status)
+{
+    current_process->status |= status & 0xff;
+    statset_add( deadprocs, current_process->pid );
+    while(1) __yield();
+}
+
+void clean_processes()
+{
+    for ( size_t i = 0; i < OS32_MAX_ZOMBIE; i++ )
+    {
+        pid_t pid;
+        if (deadprocs[i].present)
+        {
+            pid = deadprocs[i].member;
+            deadprocs[i].present = false;
+        } 
+        else
+        {
+            continue;
+        }
+        process_t* proc = process_list;
+        process_t* prev = NULL;
+        while (proc->next)
+        {
+            if (proc->pid == pid)
+            {
+                break;
+            }
+            prev = proc;
+            proc = proc->next;
+        }
+        if (prev)
+        {
+            prev->next = prev->next->next;
+        }
+        else
+        {
+            process_list = process_list->next;
+        }
+        
+        zombie_t newzomb;
+        newzomb.pid = proc->pid;
+        newzomb.parent = proc->parent;
+        newzomb.status = proc->status;
+
+        statset_add( zombies, newzomb );
+
+        process_destroy(proc);
+        kfree(proc);
+
+        
+
+    }
+}
+
+
+zombie_t pull_zombie_by_id( pid_t pid, bool await )
+{
+    __retry:
+    for (size_t i = 0; i < OS32_MAX_ZOMBIE; i++)
+    {
+        if (zombies[i].present && zombies[i].member.pid == pid)
+        {
+            zombies[i].present = 0;
+            return zombies[i].member;
+        }
+    }
+
+    if (await)
+    {
+        __yield();
+        goto __retry;
+    }
+}
+zombie_t pull_zombie_by_parent( pid_t pid, bool await )
+{
+    __retry:
+    for (size_t i = 0; i < OS32_MAX_ZOMBIE; i++)
+    {
+        if (zombies[i].present && zombies[i].member.parent == pid)
+        {
+            zombies[i].present = 0;
+            return zombies[i].member;
+        }
+    }
+
+    if (await)
+    {
+        __yield();
+        goto __retry;
+    }
 }

@@ -7,9 +7,8 @@
 
 int _start(int argc, char const *argv[])
 {
-    // TODO
-    // fix page fault 4
+
     
     puts("ls: run\n");
-    for(;;);
+    _exit(0);
 }
