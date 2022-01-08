@@ -192,6 +192,8 @@ fd_t vfs_open( const char* fpath, int mode, int flags )
                 return OS32_ERROR;
             }
 
+            // TODO use flags and mode for stuff
+
             // get the next available fd
             fd_t vfsfd = alloc_next_fd();
             // Load the appropriate properties into the table

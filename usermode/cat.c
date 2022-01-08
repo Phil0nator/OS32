@@ -11,7 +11,7 @@ int _start( int argc, const char** argv, const char* envp )
     for (size_t i = 0; i < argc; i++)
     {
         putc('\t');
-        // puts(argv[i]);
+        puts(argv[i]);
         putc('\n');
     }
     _exit(0);

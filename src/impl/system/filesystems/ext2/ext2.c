@@ -2,6 +2,7 @@
 #include "stdlib/time.h"
 #include "stdlib/kmalloc.h"
 #include "stdlib/string.h"
+#include "system/process/multitasking.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -51,11 +52,11 @@ typedef uint16_t ext2_tp_perms_t;
 #define EXT2_TP_SYMLN       0xA000
 #define EXT2_TP_UNIXSOCK    0xC000
 
-#define EXT2_PERM_OTH_EXEC  0x001
-#define EXT2_PERM_OTH_WRITE 0x002
-#define EXT2_PERM_OTH_READ  0x004
-#define EXT2_PERM_GRP_EXEC  0x008
-#define EXT2_PERM_GRP_WRITE 0x010
+#define EXT2_PERM_OTH_EXEC  0x001 
+#define EXT2_PERM_OTH_WRITE 0x002 
+#define EXT2_PERM_OTH_READ  0x004 
+#define EXT2_PERM_GRP_EXEC  0x008 
+#define EXT2_PERM_GRP_WRITE 0x010 
 #define EXT2_PERM_GRP_READ  0x020
 #define EXT2_PERM_USR_EXEC  0x040
 #define EXT2_PERM_USR_WRITE 0x080
@@ -63,6 +64,7 @@ typedef uint16_t ext2_tp_perms_t;
 #define EXT2_PERM_STICKY    0x200
 #define EXT2_PERM_SET_GRPID 0x400
 #define EXT2_PERM_SET_USRID 0x800
+
 
 typedef uint32_t ext2_inode_flags_t;
 #define EXT2_FLAG_SECDEL    0x00000001
@@ -524,6 +526,9 @@ fd_t ext2_open( struct ext2_partition* p, const char* fname )
     ext2_inode_t* in = ext2_getf( p, fname, true );
     if (in == OS32_FAILED) return OS32_ERROR;
     
+    // TODO verify perms
+    uid_t cuid = current_process->uid;
+
     // to find a file descriptor, 
     // start at #1, and search through the existing 
     // descriptor table to find the next empty entry.
